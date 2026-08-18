@@ -48,7 +48,7 @@ def load_data():
     seats_path = Path("data/bronze/csv/available_seats.csv")
     if seats_path.exists():
         seats_df = pd.read_csv(seats_path)
-        df = df.merge(seats_df, on="CourseName", how="left")
+        df = df.merge(seats_df, on=["AcademicYear", "CourseName"], how="left")
     else:
         df["Seats"] = np.nan
         
