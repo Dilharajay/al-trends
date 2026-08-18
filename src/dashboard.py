@@ -137,11 +137,22 @@ elif page == "Course Explorer":
         d_course = d_course[d_course["DistrictName"] == selected_dist]
         
     st.subheader(f"Historical Trend for {selected_course}")
-    if not d_course.dropna(subset=['CutoffZ']).empty:
-        fig = px.line(
-            d_course.dropna(subset=['CutoffZ']).sort_values("AcademicYear"),
-            x="AcademicYear", y="CutoffZ", color="UniversityName", markers=True
-        )
+    d_course_clean = d_course.dropna(subset=['CutoffZ']).sort_values("AcademicYear")
+    
+    if not d_course_clean.empty:
+        if selected_dist == "All":
+            d_course_agg = d_course_clean.groupby(["AcademicYear", "UniversityName"])["CutoffZ"].mean().reset_index()
+            fig = px.line(
+                d_course_agg,
+                x="AcademicYear", y="CutoffZ", color="UniversityName", markers=True,
+                title="Average Cutoff across All Districts"
+            )
+        else:
+            fig = px.line(
+                d_course_clean,
+                x="AcademicYear", y="CutoffZ", color="UniversityName", markers=True,
+                title=f"Cutoff for {selected_dist} District"
+            )
         st.plotly_chart(fig, width='stretch')
         
         st.subheader("Cross-Tabulation (Pivot)")
