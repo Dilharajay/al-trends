@@ -1,0 +1,25 @@
+﻿combination_id,stream,subject_1,subject_2,subject_3
+PHY-001,Physical Science,Combined Mathematics,Physics,Chemistry
+PHY-002,Physical Science,Combined Mathematics,Physics,ICT
+PHY-003,Physical Science,Combined Mathematics,Chemistry,ICT
+PHY-004,Physical Science,Combined Mathematics,Physics,Agricultural Science
+PHY-005,Physical Science,Combined Mathematics,Physics,Statistics
+PHY-006,Physical Science,Combined Mathematics,Chemistry,Biology
+BIO-001,Biological Science,Biology,Chemistry,Physics
+BIO-002,Biological Science,Biology,Chemistry,Agricultural Science
+BIO-003,Biological Science,Biology,Chemistry,ICT
+BIO-004,Biological Science,Biology,Physics,Agricultural Science
+COM-001,Commerce,Accounting,Business Studies,Economics
+COM-002,Commerce,Accounting,Business Studies,ICT
+COM-003,Commerce,Accounting,Economics,Business Statistics
+COM-004,Commerce,Accounting,Economics,ICT
+COM-005,Commerce,Business Studies,Economics,ICT
+TEC-001,Technology,Engineering Technology,Science for Technology,ICT
+TEC-002,Technology,Engineering Technology,Science for Technology,Economics
+TEC-003,Technology,Engineering Technology,Science for Technology,Accounting
+TEC-004,Technology,Bio Systems Technology,Science for Technology,Agricultural Science
+TEC-005,Technology,Bio Systems Technology,Science for Technology,ICT
+TEC-006,Technology,Bio Systems Technology,Science for Technology,Economics
+ART-001,Arts,Political Science,History,Geography
+ART-002,Arts,Economics,Political Science,Geography
+ART-003,Arts,Logic & Scientific Method,History,English Literature

@@ -54,6 +54,22 @@ Relationships:
 
 - `dim_course[CourseID]` -> `fact_cutoffs[CourseID]`
 
+### dim_combination (New)
+
+Normalized standard A/L subject combinations. Note: To map these to specific courses, an intermediate bridge table (`bridge_course_combination`) is recommended (linking `CourseID` to `combination_id`).
+
+Columns:
+
+- combination_id: text (primary key, e.g., PHY-001)
+- stream: text (e.g., Physical Science, Commerce)
+- subject_1: text
+- subject_2: text
+- subject_3: text
+
+Relationships:
+- `bridge_course_combination[combination_id]` -> `dim_combination[combination_id]`
+- `bridge_course_combination[CourseID]` -> `dim_course[CourseID]`
+
 ### dim_university
 
 Unique university dimension.
