@@ -197,6 +197,45 @@ elif page == "District Analysis":
 elif page == "Historical Trends":
     st.title("Historical Trends & Volatility")
     
+    st.subheader("Interactive Trend Comparison")
+    st.markdown("Compare historical cutoff trends across different degree programmes and universities.")
+    
+    ht_col1, ht_col2 = st.columns(2)
+    ht_courses = ht_col1.multiselect("Select Courses (leave blank for overall)", sorted(df["CourseName"].unique()), default=["MEDICINE", "ENGINEERING"] if "MEDICINE" in df["CourseName"].unique() else [])
+    ht_unis = ht_col2.multiselect("Select Universities (leave blank for overall)", sorted(df["UniversityName"].unique()), default=[])
+    
+    ht_df = df.dropna(subset=['CutoffZ'])
+    
+    if ht_courses:
+        ht_df = ht_df[ht_df["CourseName"].isin(ht_courses)]
+    if ht_unis:
+        ht_df = ht_df[ht_df["UniversityName"].isin(ht_unis)]
+        
+    if not ht_df.empty:
+        if not ht_courses and not ht_unis:
+            ht_agg = ht_df.groupby("AcademicYear")["CutoffZ"].mean().reset_index()
+            ht_agg["Legend"] = "National Average (All Courses & Universities)"
+        elif ht_courses and not ht_unis:
+            ht_agg = ht_df.groupby(["AcademicYear", "CourseName"])["CutoffZ"].mean().reset_index()
+            ht_agg["Legend"] = ht_agg["CourseName"] + " (National Average)"
+        elif not ht_courses and ht_unis:
+            ht_agg = ht_df.groupby(["AcademicYear", "UniversityName"])["CutoffZ"].mean().reset_index()
+            ht_agg["Legend"] = ht_agg["UniversityName"] + " (All Courses Average)"
+        else:
+            ht_agg = ht_df.groupby(["AcademicYear", "CourseName", "UniversityName"])["CutoffZ"].mean().reset_index()
+            ht_agg["Legend"] = ht_agg["CourseName"] + " - " + ht_agg["UniversityName"]
+            
+        fig_ht = px.line(
+            ht_agg.sort_values("AcademicYear"),
+            x="AcademicYear", y="CutoffZ", color="Legend", markers=True,
+            title="Historical Cutoff Averages over Time"
+        )
+        st.plotly_chart(fig_ht, width='stretch')
+    else:
+        st.info("No data available for the selected filters.")
+        
+    st.markdown("---")
+
     st.subheader("Cutoff Volatility & Competitiveness")
     st.markdown("Every course is analyzed for mean cutoff, variance (volatility), and an overall Competitiveness Index (0-100).")
     st.dataframe(course_stats[['CourseName', 'mean', 'min', 'max', 'Volatility', 'Competitiveness_Band']].sort_values('mean', ascending=False), width='stretch')
