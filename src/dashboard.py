@@ -1,13 +1,11 @@
 import sqlite3
 import pandas as pd
+import numpy as np
 import streamlit as st
 import plotly.express as px
-import numpy as np
+from pathlib import Path
 
-st.set_page_config(page_title="Sri Lanka A/L University Admission Analytics", layout="wide")
-
-st.title("Sri Lanka A/L University Admission Analytics Dashboard")
-st.markdown("Explore university admission Z-score cutoffs through descriptive, diagnostic, predictive, and student analytics.")
+st.set_page_config(page_title="Sri Lanka A/L Cutoffs", layout="wide")
 
 @st.cache_data
 def load_data():
@@ -21,8 +19,7 @@ def load_data():
         d.DistrictName,
         f.CutoffZ,
         f.CutoffStatus,
-        f.AllIslandMerit,
-        f.AptitudeTest
+        f.AllIslandMerit
     FROM fact_cutoffs f
     JOIN dim_course c ON f.CourseID = c.CourseID
     JOIN dim_university u ON f.UniversityID = u.UniversityID
@@ -30,239 +27,224 @@ def load_data():
     """
     df = pd.read_sql(query, conn)
     conn.close()
-    return df
+    
+    df['CutoffZ'] = pd.to_numeric(df['CutoffZ'], errors='coerce')
+    
+    # Load seats
+    seats_path = Path("data/bronze/csv/available_seats.csv")
+    if seats_path.exists():
+        seats_df = pd.read_csv(seats_path)
+        df = df.merge(seats_df, on="CourseName", how="left")
+    else:
+        df["Seats"] = np.nan
+        
+    # Calculate Volatility & Competitiveness for each Course
+    stats = df.dropna(subset=['CutoffZ']).groupby('CourseName')['CutoffZ'].agg(['mean', 'std', 'min', 'max']).reset_index()
+    stats['std'] = stats['std'].fillna(0)
+    stats['Volatility'] = pd.cut(stats['std'], bins=[-1, 0.05, 0.15, float('inf')], labels=['Low', 'Medium', 'High'])
+    
+    # Simple Competitiveness Index (0-100)
+    max_z = stats['mean'].max()
+    min_z = stats['mean'].min()
+    if pd.notna(max_z) and pd.notna(min_z) and max_z > min_z:
+        stats['Normalized Z'] = (stats['mean'] - min_z) / (max_z - min_z) * 100
+        stats['Competitiveness'] = stats['Normalized Z'] - (stats['std'] * 10)
+        stats['Competitiveness'] = stats['Competitiveness'].clip(0, 100)
+    else:
+        stats['Competitiveness'] = 50
+        
+    stats['Competitiveness_Band'] = pd.cut(
+        stats['Competitiveness'], 
+        bins=[-1, 25, 50, 75, 90, 100], 
+        labels=['Lower historical cutoff', 'Moderate', 'Competitive', 'Highly competitive', 'Extremely competitive']
+    )
+    
+    df = df.merge(stats[['CourseName', 'Volatility', 'Competitiveness', 'Competitiveness_Band']], on="CourseName", how="left")
+    
+    return df, stats
 
-df = load_data()
+df, course_stats = load_data()
 
-# Ensure CutoffZ is numeric
-df['CutoffZ'] = pd.to_numeric(df['CutoffZ'], errors='coerce')
+st.sidebar.title("SRI LANKA A/L CUTOFFS")
+page = st.sidebar.radio("Navigation", [
+    "Overview", 
+    "Course Explorer", 
+    "District Analysis", 
+    "Historical Trends", 
+    "Student Analyzer", 
+    "Methodology"
+])
 
-# Tabs for the four layers
-tab1, tab2, tab3, tab4 = st.tabs(["Layer 1: Descriptive", "Layer 2: Diagnostic", "Layer 3: Student Analytics", "Layer 4: Predictive"])
+if page == "Overview":
+    st.title("National Overview")
+    st.markdown("High-level summary of the Sri Lankan A/L University Admission Cutoffs.")
+    
+    sel_year = st.selectbox("Academic Year", sorted(df["AcademicYear"].unique(), reverse=True))
+    d_year = df[df["AcademicYear"] == sel_year]
+    d_valid = d_year.dropna(subset=['CutoffZ'])
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("Universities", d_year["UniversityName"].nunique())
+    col2.metric("Degree Programmes", d_year["CourseName"].nunique())
+    col3.metric("Districts", d_year["DistrictName"].nunique())
+    
+    if not d_valid.empty:
+        col4.metric("Highest Z-Score", round(d_valid["CutoffZ"].max(), 4))
+        col5.metric("Median Z-Score", round(d_valid["CutoffZ"].median(), 4))
+        
+        st.subheader("Top 10 Most Competitive Courses")
+        top_courses = d_valid.groupby("CourseName")["CutoffZ"].max().nlargest(10).reset_index()
+        fig_bar = px.bar(top_courses, x="CutoffZ", y="CourseName", orientation='h', title="Highest Cutoffs by Course")
+        fig_bar.update_layout(yaxis={'categoryorder':'total ascending'})
+        st.plotly_chart(fig_bar, width='stretch')
+        
+        st.subheader("Average Cutoff by Academic Year")
+        trend_all = df.dropna(subset=['CutoffZ']).groupby("AcademicYear")["CutoffZ"].mean().reset_index()
+        fig_line = px.line(trend_all.sort_values("AcademicYear"), x="AcademicYear", y="CutoffZ", markers=True)
+        st.plotly_chart(fig_line, width='stretch')
+        
+        st.subheader("Average Cutoff by District")
+        dist_avg = d_valid.groupby("DistrictName")["CutoffZ"].mean().reset_index().sort_values("CutoffZ", ascending=False)
+        fig_dist = px.bar(dist_avg, x="DistrictName", y="CutoffZ", color="CutoffZ", color_continuous_scale="Viridis")
+        st.plotly_chart(fig_dist, width='stretch')
+    else:
+        st.warning("No valid Z-scores for this year.")
 
-with tab1:
-    st.header("Descriptive Analytics: What Happened?")
-    st.markdown("Get a high-level summary of the cutoffs for a specific academic year and district.")
+elif page == "Course Explorer":
+    st.title("Course Explorer")
+    st.markdown("Find a specific degree and analyze its historical trend.")
     
     col1, col2 = st.columns(2)
-    with col1:
-        selected_year = st.selectbox("Select Academic Year", sorted(df["AcademicYear"].unique(), reverse=True))
-    with col2:
-        selected_district_desc = st.selectbox("Select District", sorted(df["DistrictName"].unique()), key="desc_dist")
-        
-    df_desc = df[(df["AcademicYear"] == selected_year) & (df["DistrictName"] == selected_district_desc)]
+    selected_course = col1.selectbox("Select Course", sorted(df["CourseName"].unique()))
+    selected_dist = col2.selectbox("Select District", ["All"] + sorted(df["DistrictName"].unique()))
     
-    st.subheader(f"Overview for {selected_year} - {selected_district_desc}")
-    
-    kpi1, kpi2, kpi3 = st.columns(3)
-    kpi1.metric("Total Courses Offered", df_desc["CourseName"].nunique())
-    kpi2.metric("Universities Enrolling", df_desc["UniversityName"].nunique())
-    if not df_desc["CutoffZ"].dropna().empty:
-        kpi3.metric("Highest Z-Score Cutoff", round(df_desc["CutoffZ"].max(), 4))
-    else:
-        kpi3.metric("Highest Z-Score Cutoff", "N/A")
+    d_course = df[df["CourseName"] == selected_course]
+    if selected_dist != "All":
+        d_course = d_course[d_course["DistrictName"] == selected_dist]
         
-    st.markdown("### Z-Score Distribution by Course")
-    if not df_desc.empty:
-        top_courses = df_desc.groupby("CourseName")["CutoffZ"].max().nlargest(20).index
-        fig_desc = px.box(
-            df_desc[df_desc["CourseName"].isin(top_courses)], 
-            x="CourseName", y="CutoffZ", 
-            title="Z-Score Spread for Top 20 Most Competitive Courses",
-            points="all",
-            color="CourseName"
+    st.subheader(f"Historical Trend for {selected_course}")
+    if not d_course.dropna(subset=['CutoffZ']).empty:
+        fig = px.line(
+            d_course.dropna(subset=['CutoffZ']).sort_values("AcademicYear"),
+            x="AcademicYear", y="CutoffZ", color="UniversityName", markers=True
         )
-        fig_desc.update_layout(xaxis={'categoryorder':'total descending'}, showlegend=False)
-        fig_desc.update_xaxes(tickangle=45)
-        st.plotly_chart(fig_desc, width='stretch')
+        st.plotly_chart(fig, width='stretch')
         
-        st.markdown("### Dataset Summary")
-        st.dataframe(df_desc.dropna(subset=['CutoffZ']).sort_values('CutoffZ', ascending=False), width='stretch')
+        st.subheader("Cross-Tabulation (Pivot)")
+        pivot = d_course.pivot_table(index=["UniversityName", "DistrictName"], columns="AcademicYear", values="CutoffZ")
+        st.dataframe(pivot, width='stretch')
     else:
-        st.info("No data available for this selection.")
+        st.info("No Z-score data available.")
 
-with tab2:
-    st.header("Diagnostic Analytics: Where and how did cutoffs change?")
-    st.markdown("Analyze year-over-year trends and variance in Z-scores for a specific course.")
+elif page == "District Analysis":
+    st.title("District Analysis")
     
-    col_d1, col_d2 = st.columns(2)
-    with col_d1:
-        selected_course = st.selectbox("Select Course", sorted(df["CourseName"].unique()), key="diag_course")
-    with col_d2:
-        selected_district = st.selectbox("Select District", sorted(df["DistrictName"].unique()), key="diag_dist")
-        
-    df_diag = df[(df["CourseName"] == selected_course) & (df["DistrictName"] == selected_district)]
-    df_diag = df_diag.dropna(subset=['CutoffZ'])
+    st.subheader("District Competitiveness Matrix")
+    sel_courses = st.multiselect("Select Courses for Matrix", sorted(df["CourseName"].unique()), default=["Medicine", "Engineering", "Computer Science", "Physical Science", "Management"] if "Medicine" in df["CourseName"].values else sorted(df["CourseName"].unique())[:5])
+    sel_year_dist = st.selectbox("Academic Year", sorted(df["AcademicYear"].unique(), reverse=True))
     
-    if not df_diag.empty:
-        fig_trend = px.line(
-            df_diag.sort_values("AcademicYear"), 
-            x="AcademicYear", 
-            y="CutoffZ", 
-            color="UniversityName",
-            markers=True,
-            title=f"Z-Score Trends for {selected_course} in {selected_district}"
-        )
-        st.plotly_chart(fig_trend, width='stretch')
+    d_mat = df[(df["AcademicYear"] == sel_year_dist) & (df["CourseName"].isin(sel_courses))].dropna(subset=['CutoffZ'])
+    if not d_mat.empty:
+        matrix = d_mat.pivot_table(index="DistrictName", columns="CourseName", values="CutoffZ", aggfunc='mean')
+        st.dataframe(matrix.style.background_gradient(cmap='YlOrRd', axis=None), width='stretch')
+    
+    st.markdown("---")
+    st.subheader("Compare Two Districts")
+    c1, c2 = st.columns(2)
+    dist_a = c1.selectbox("District A", sorted(df["DistrictName"].unique()), index=0)
+    dist_b = c2.selectbox("District B", sorted(df["DistrictName"].unique()), index=1 if len(df["DistrictName"].unique())>1 else 0)
+    
+    if dist_a and dist_b:
+        da = df[(df["AcademicYear"] == sel_year_dist) & (df["DistrictName"] == dist_a)].groupby("CourseName")["CutoffZ"].mean()
+        db = df[(df["AcademicYear"] == sel_year_dist) & (df["DistrictName"] == dist_b)].groupby("CourseName")["CutoffZ"].mean()
+        comp = pd.DataFrame({dist_a: da, dist_b: db}).dropna()
+        comp['Difference'] = comp[dist_a] - comp[dist_b]
+        st.dataframe(comp.sort_values('Difference', ascending=False), width='stretch')
+
+elif page == "Historical Trends":
+    st.title("Historical Trends & Volatility")
+    
+    st.subheader("Cutoff Volatility & Competitiveness")
+    st.markdown("Every course is analyzed for mean cutoff, variance (volatility), and an overall Competitiveness Index (0-100).")
+    st.dataframe(course_stats[['CourseName', 'mean', 'min', 'max', 'Volatility', 'Competitiveness_Band']].sort_values('mean', ascending=False), width='stretch')
+    
+    st.markdown("---")
+    st.subheader("Fastest Rising & Falling Courses (YoY)")
+    sel_uni = st.selectbox("Select University", ["All"] + sorted(df["UniversityName"].unique()))
+    
+    d_trend = df.dropna(subset=['CutoffZ'])
+    if sel_uni != "All":
+        d_trend = d_trend[d_trend["UniversityName"] == sel_uni]
         
-        st.subheader("Year-over-Year (YoY) Change Analysis")
-        # Pivot to calculate diff
-        pivot_df = df_diag.pivot_table(index="AcademicYear", columns="UniversityName", values="CutoffZ").sort_index()
-        diff_df = pivot_df.diff()
+    pivot_trend = d_trend.pivot_table(index=["CourseName", "UniversityName"], columns="ExamYear", values="CutoffZ", aggfunc='mean')
+    
+    years = sorted(d_trend["ExamYear"].unique())
+    if len(years) >= 2:
+        y1, y2 = years[-2], years[-1]
+        pivot_trend['Absolute Change'] = pivot_trend[y2] - pivot_trend[y1]
+        pivot_trend['Percentage Change (%)'] = (pivot_trend['Absolute Change'] / pivot_trend[y1]) * 100
         
-        # Melt back for plotting
-        diff_melted = diff_df.reset_index().melt(id_vars="AcademicYear", value_name="Z_Score_Change").dropna()
+        res = pivot_trend[[y1, y2, 'Absolute Change', 'Percentage Change (%)']].dropna().sort_values('Percentage Change (%)', ascending=False)
         
-        if not diff_melted.empty:
-            fig_diff = px.bar(
-                diff_melted,
-                x="AcademicYear",
-                y="Z_Score_Change",
-                color="UniversityName",
-                barmode="group",
-                title="Year-over-Year Z-Score Variance"
-            )
-            st.plotly_chart(fig_diff, width='stretch')
+        c1, c2 = st.columns(2)
+        c1.markdown(f"**Fastest Rising ( {y1} -> {y2} )**")
+        c1.dataframe(res.head(10), width='stretch')
+        
+        c2.markdown(f"**Fastest Falling ( {y1} -> {y2} )**")
+        c2.dataframe(res.tail(10).sort_values('Percentage Change (%)'), width='stretch')
+    else:
+        st.info("Need at least 2 exam years of data to compute trends.")
+
+elif page == "Student Analyzer":
+    st.title("Historical Eligibility / Competitiveness Indicator")
+    st.markdown("Explore historically competitive courses based on your Z-score. **Note:** The UGC cutoff is year-dependent and influenced by candidate performance and demand. This tool is an indicator of historical eligibility, not a guarantee of future admission.")
+    
+    c1, c2, c3 = st.columns(3)
+    stu_dist = c1.selectbox("Your District", sorted(df["DistrictName"].unique()))
+    stu_z = c2.number_input("Your Z-score", min_value=-4.0, max_value=4.0, value=1.5, step=0.01)
+    ref_year = c3.selectbox("Reference Academic Year", sorted(df["AcademicYear"].unique(), reverse=True))
+    
+    d_stu = df[(df["AcademicYear"] == ref_year) & (df["DistrictName"] == stu_dist)].dropna(subset=['CutoffZ']).copy()
+    
+    if not d_stu.empty:
+        d_stu['Difference'] = stu_z - d_stu['CutoffZ']
+        
+        def assess(diff):
+            if diff >= 0.1: return "Safe"
+            if diff >= -0.05: return "Possible"
+            if diff >= -0.2: return "Competitive"
+            return "Unlikely"
             
-            st.markdown("### Changes Data")
-            st.dataframe(diff_melted.sort_values(by=["AcademicYear", "UniversityName"]), width='stretch')
-        else:
-            st.info("Not enough sequential data to calculate Year-over-Year changes.")
+        d_stu['Assessment'] = d_stu['Difference'].apply(assess)
+        
+        res = d_stu[['CourseName', 'UniversityName', 'CutoffZ', 'Difference', 'Assessment', 'Seats']].sort_values('Difference', ascending=False)
+        
+        st.subheader("Your Eligibility Landscape")
+        
+        color_map = {"Safe": "green", "Possible": "blue", "Competitive": "orange", "Unlikely": "red"}
+        fig = px.scatter(res, x="CutoffZ", y="CourseName", color="Assessment", color_discrete_map=color_map, hover_data=["UniversityName", "Difference"])
+        fig.add_vline(x=stu_z, line_dash="dash", line_color="black", annotation_text="Your Z-Score")
+        st.plotly_chart(fig, width='stretch')
+        
+        st.dataframe(res.style.map(lambda v: f"color: {color_map.get(v, 'black')}", subset=['Assessment']), width='stretch')
     else:
-        st.info("No data available for this course and district combination.")
+        st.info("No data available for the selected reference year.")
 
-with tab3:
-    st.header("Student Analytics: Which courses are within reach?")
-    st.markdown("Enter your Z-score to see which courses you would have historically qualified for based on past cutoffs.")
+elif page == "Methodology":
+    st.title("Methodology & Data Pipeline")
+    st.markdown("""
+    ### Data Pipeline
+    1. **UGC PDFs**: Official university cutoff documents.
+    2. **Python Extraction**: Parsing using `pymupdf` to extract tables accurately.
+    3. **Cleaning & Standardization**: District, Course, and University names are normalized. 
+    4. **NQC Handling**: "Not Qualified for Course" (NQC) values are retained as a status string (`CutoffStatus`) alongside numerical Z-scores (stored as NULL for NQC), ensuring NQC is strictly differentiated from a Z-score of 0.
+    5. **Database**: Exported to a star-schema SQLite/Parquet model for BI integration.
     
-    col_s1, col_s2, col_s3 = st.columns(3)
-    with col_s1:
-        student_district = st.selectbox("Your District", sorted(df["DistrictName"].unique()), key="stu_dist")
-    with col_s2:
-        student_zscore = st.number_input("Your Z-Score", min_value=-3.0, max_value=4.0, value=1.5, step=0.05)
-    with col_s3:
-        target_year = st.selectbox("Reference Academic Year", sorted(df["AcademicYear"].unique(), reverse=True), key="stu_year")
-        
-    df_stu = df[(df["AcademicYear"] == target_year) & (df["DistrictName"] == student_district)]
-    df_stu = df_stu.dropna(subset=['CutoffZ'])
+    ### Analytical Metrics
+    - **Cutoff Volatility**: The standard deviation of a course's cutoff over available years.
+    - **Competitiveness Index**: A normalized, custom metric (0-100) combining historical mean cutoff and stability. This is an exploratory indicator, not an official UGC measure.
     
-    if not df_stu.empty:
-        df_stu = df_stu.copy()
-        df_stu['Margin'] = student_zscore - df_stu['CutoffZ']
-        
-        def categorize(margin):
-            if margin >= 0.1:
-                return "Safe (Margin >= +0.1)"
-            elif margin >= -0.05:
-                return "Borderline (-0.05 to +0.1)"
-            else:
-                return "Out of Reach"
-                
-        df_stu['Likelihood'] = df_stu['Margin'].apply(categorize)
-        
-        reachable_df = df_stu[df_stu['Likelihood'] != "Out of Reach"].sort_values("Margin", ascending=False)
-        
-        if not reachable_df.empty:
-            st.success(f"Found {len(reachable_df)} courses within reach for {target_year} in {student_district} with a Z-Score of {student_zscore}.")
-            st.dataframe(
-                reachable_df[["CourseName", "UniversityName", "CutoffZ", "Margin", "Likelihood"]],
-                width='stretch'
-            )
-            
-            fig_reach = px.scatter(
-                reachable_df,
-                x="CutoffZ",
-                y="CourseName",
-                color="Likelihood",
-                hover_data=["UniversityName", "Margin"],
-                title="Reachable Courses Distribution",
-                color_discrete_map={
-                    "Safe (Margin >= +0.1)": "green",
-                    "Borderline (-0.05 to +0.1)": "orange"
-                }
-            )
-            fig_reach.update_traces(marker=dict(size=10))
-            fig_reach.update_layout(yaxis={'categoryorder':'total ascending'})
-            st.plotly_chart(fig_reach, width='stretch')
-        else:
-            st.warning("Based on the reference year, no courses appear to be within reach. Try a lower threshold or different reference year.")
-    else:
-        st.info("No cutoff data available for the selected year and district.")
-
-with tab4:
-    st.header("Predictive Analytics: What might next year's cutoffs look like?")
-    st.markdown("Estimate the next cutoff based on historical linear trends.")
-    
-    col_p1, col_p2, col_p3 = st.columns(3)
-    with col_p1:
-        selected_course_pred = st.selectbox("Select Course", sorted(df["CourseName"].unique()), key="pred_course")
-    with col_p2:
-        selected_district_pred = st.selectbox("Select District", sorted(df["DistrictName"].unique()), key="pred_dist")
-    with col_p3:
-        target_exam_year = st.number_input("Target Exam Year to Predict", min_value=int(df["ExamYear"].max())+1, max_value=2030, value=int(df["ExamYear"].max())+1, step=1, key="pred_year")
-        
-    df_pred = df[(df["CourseName"] == selected_course_pred) & (df["DistrictName"] == selected_district_pred)]
-    df_pred = df_pred.dropna(subset=['CutoffZ', 'ExamYear'])
-    
-    if not df_pred.empty:
-        # Group by university
-        predictions = []
-        for uni, group in df_pred.groupby("UniversityName"):
-            group = group.sort_values("ExamYear")
-            if len(group) >= 2:
-                # Simple linear regression
-                z = np.polyfit(group["ExamYear"], group["CutoffZ"], 1)
-                p = np.poly1d(z)
-                predicted_cutoff = p(target_exam_year)
-                
-                # Calculate standard deviation of residuals for confidence margin
-                residuals = group["CutoffZ"] - p(group["ExamYear"])
-                std_dev = np.std(residuals) if len(residuals) > 0 else 0
-                
-                predictions.append({
-                    "UniversityName": uni,
-                    "Historical Data Points": len(group),
-                    "Recent Cutoff": group.iloc[-1]["CutoffZ"],
-                    "Predicted Cutoff": round(predicted_cutoff, 4),
-                    "Margin (±)": round(std_dev, 4)
-                })
-            else:
-                predictions.append({
-                    "UniversityName": uni,
-                    "Historical Data Points": len(group),
-                    "Recent Cutoff": group.iloc[-1]["CutoffZ"],
-                    "Predicted Cutoff": "Insufficient Data",
-                    "Margin (±)": "N/A"
-                })
-                
-        pred_df = pd.DataFrame(predictions)
-        
-        st.subheader(f"Projection for {target_exam_year}")
-        st.dataframe(pred_df, width='stretch')
-        
-        # Visualize trend for the universities that had enough data
-        fig_pred = px.scatter(
-            df_pred,
-            x="ExamYear",
-            y="CutoffZ",
-            color="UniversityName",
-            title=f"Historical Trends vs Projection for {target_exam_year}"
-        )
-        fig_pred.update_traces(mode="lines+markers")
-        
-        # Add prediction points
-        valid_preds = pred_df[pred_df["Predicted Cutoff"] != "Insufficient Data"]
-        if not valid_preds.empty:
-            for _, row in valid_preds.iterrows():
-                fig_pred.add_scatter(
-                    x=[target_exam_year],
-                    y=[row["Predicted Cutoff"]],
-                    mode="markers",
-                    marker=dict(symbol="star", size=12),
-                    name=f"Predicted: {row['UniversityName']}"
-                )
-        
-        st.plotly_chart(fig_pred, width='stretch')
-        st.caption("Note: This is a simple linear projection based on historical cutoffs. Actual cutoffs depend heavily on exam difficulty and student performance distributions, which are highly variable.")
-    else:
-        st.info("No data available for this selection to run predictions.")
+    ### Important Limitations
+    The UGC states that the minimum Z-score required for a given course is year-specific and depends directly on candidate performance and national demand. 
+    **Do not use this dashboard to deterministically predict university entry.** It is designed solely to investigate how cutoffs have behaved across Sri Lanka over time.
+    """)
