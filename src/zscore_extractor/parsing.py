@@ -112,23 +112,34 @@ def extract_headers(page: pymupdf.Page) -> list[dict]:
 
     headers: list[dict] = []
     pending_course_parts: list[str] = []
+    pending_uni_parts: list[str] = []
+    in_uni = False
 
     for _, direction, text_value in items:
         if direction[1] < -0.9 and abs(direction[0]) < 1e-6:
-            if text_value.startswith("("):
-                if pending_course_parts:
+            cleaned_val = clean_text(text_value)
+            if cleaned_val.startswith("("):
+                lower_val = cleaned_val.lower()
+                if any(kw in lower_val for kw in ["university", "institute", "campus", "academy"]):
+                    in_uni = True
+                
+            if in_uni:
+                pending_uni_parts.append(text_value)
+                if cleaned_val.endswith(")"):
                     raw_course = clean_text(" ".join(pending_course_parts))
-                    university = clean_text(text_value).strip("() ")
+                    raw_uni = clean_text(" ".join(pending_uni_parts)).strip("() ")
                     course_name, all_island_merit, aptitude_test = parse_course_flags(raw_course)
                     headers.append(
                         {
                             "CourseName": course_name,
-                            "UniversityName": university,
+                            "UniversityName": raw_uni,
                             "AllIslandMerit": all_island_merit,
                             "AptitudeTest": aptitude_test,
                         }
                     )
                     pending_course_parts = []
+                    pending_uni_parts = []
+                    in_uni = False
             else:
                 pending_course_parts.append(text_value)
 
