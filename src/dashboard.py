@@ -26,6 +26,20 @@ def load_data():
     JOIN dim_district d ON f.DistrictID = d.DistrictID
     """
     df = pd.read_sql(query, conn)
+    
+    query_bridge = """
+    SELECT b.CourseID, c.CourseName, b.combination_id, d.stream, d.subject_1, d.subject_2, d.subject_3
+    FROM bridge_course_combination b
+    JOIN dim_combination d ON b.combination_id = d.combination_id
+    JOIN dim_course c ON b.CourseID = c.CourseID
+    """
+    try:
+        bridge_df = pd.read_sql(query_bridge, conn)
+        # Create a display name for the combinations
+        bridge_df['Combo_Display'] = bridge_df['combination_id'] + " (" + bridge_df['stream'] + "): " + bridge_df['subject_1'] + ", " + bridge_df['subject_2'] + ", " + bridge_df['subject_3']
+    except Exception:
+        bridge_df = pd.DataFrame()
+        
     conn.close()
     
     df['CutoffZ'] = pd.to_numeric(df['CutoffZ'], errors='coerce')
@@ -61,9 +75,9 @@ def load_data():
     
     df = df.merge(stats[['CourseName', 'Volatility', 'Competitiveness', 'Competitiveness_Band']], on="CourseName", how="left")
     
-    return df, stats
+    return df, stats, bridge_df
 
-df, course_stats = load_data()
+df, course_stats, bridge_df = load_data()
 
 st.sidebar.title("SRI LANKA A/L CUTOFFS")
 page = st.sidebar.radio("Navigation", [
@@ -199,12 +213,24 @@ elif page == "Student Analyzer":
     st.title("Historical Eligibility / Competitiveness Indicator")
     st.markdown("Explore historically competitive courses based on your Z-score. **Note:** The UGC cutoff is year-dependent and influenced by candidate performance and demand. This tool is an indicator of historical eligibility, not a guarantee of future admission.")
     
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     stu_dist = c1.selectbox("Your District", sorted(df["DistrictName"].unique()))
     stu_z = c2.number_input("Your Z-score", min_value=-4.0, max_value=4.0, value=1.5, step=0.01)
-    ref_year = c3.selectbox("Reference Academic Year", sorted(df["AcademicYear"].unique(), reverse=True))
+    ref_year = c3.selectbox("Reference Year", sorted(df["AcademicYear"].unique(), reverse=True))
+    
+    # Subject combination slicer
+    combo_options = ["All Courses"]
+    if not bridge_df.empty:
+        combo_options.extend(sorted(bridge_df['Combo_Display'].unique()))
+    
+    stu_combo = c4.selectbox("Subject Combination", combo_options)
     
     d_stu = df[(df["AcademicYear"] == ref_year) & (df["DistrictName"] == stu_dist)].dropna(subset=['CutoffZ']).copy()
+    
+    # Filter by subject combination if specific one is selected
+    if stu_combo != "All Courses" and not bridge_df.empty:
+        allowed_courses = bridge_df[bridge_df['Combo_Display'] == stu_combo]['CourseName'].unique()
+        d_stu = d_stu[d_stu['CourseName'].isin(allowed_courses)]
     
     if not d_stu.empty:
         d_stu['Difference'] = stu_z - d_stu['CutoffZ']
