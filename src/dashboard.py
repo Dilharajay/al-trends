@@ -128,15 +128,19 @@ elif page == "Course Explorer":
     st.title("Course Explorer")
     st.markdown("Find a specific degree and analyze its historical trend.")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     courses = sorted(df["CourseName"].unique())
-    default_course = "Medicine" if "Medicine" in courses else ("Engineering" if "Engineering" in courses else courses[0])
+    default_course = "MEDICINE" if "MEDICINE" in courses else ("ENGINEERING" if "ENGINEERING" in courses else courses[0])
     default_index = courses.index(default_course) if default_course in courses else 0
     
     selected_course = col1.selectbox("Select Course", courses, index=default_index)
     selected_dist = col2.selectbox("Select District", ["All"] + sorted(df["DistrictName"].unique()))
     
-    d_course = df[df["CourseName"] == selected_course]
+    d_course_all_unis = df[df["CourseName"] == selected_course]
+    available_unis = sorted(d_course_all_unis["UniversityName"].unique())
+    selected_unis = col3.multiselect("Select Universities", available_unis, default=available_unis)
+    
+    d_course = d_course_all_unis[d_course_all_unis["UniversityName"].isin(selected_unis)]
     if selected_dist != "All":
         d_course = d_course[d_course["DistrictName"] == selected_dist]
         
