@@ -5,11 +5,11 @@ import re
 from pathlib import Path
 from typing import List, Tuple
 
-import fitz
+import pymupdf
 import pandas as pd
 import pdfplumber
 
-from .config import ACADEMIC_YEAR, DISTRICTS, EXAM_YEAR, PUBLICATION_DATE
+from .config import DISTRICTS
 
 
 def clean_text(value: str | None) -> str:
@@ -35,7 +35,55 @@ def parse_course_flags(course_name: str) -> tuple[str, bool, bool]:
     return cleaned, all_island_merit, aptitude_test
 
 
-def extract_headers(page: fitz.Page) -> list[dict]:
+def normalize_university_name(name: str) -> str:
+    """Standardize known university/institute name variants."""
+    text = clean_text(name)
+    text = text.replace(" -Trincomalee", " - Trincomalee")
+    text = text.rstrip(",")
+
+    alias_map = {
+        "University of Jayewardenepura": "University of Sri Jayewardenepura",
+        "University of Sabaragamuwa": "Sabaragamuwa University of Sri Lanka",
+        "The Gampaha Wickramarachchi University of Indigenous": "The Gampaha Wickramarachchi University of Indigenous Medicine, Sri Lanka",
+        "Gampaha Wickramarachchi University of Indigenous Medicine": "The Gampaha Wickramarachchi University of Indigenous Medicine, Sri Lanka",
+        "Gampaha Wickramarachchi University of Indigenous Medicine,": "The Gampaha Wickramarachchi University of Indigenous Medicine, Sri Lanka",
+        "Gampaha Wickramaarachchi Ayurveda Institute": "The Gampaha Wickramarachchi University of Indigenous Medicine, Sri Lanka",
+        "Institute of Indigenous Medicine": "The Gampaha Wickramarachchi University of Indigenous Medicine, Sri Lanka",
+        "Trincomalee Campus, Eastern University, Sri Lanka": "Eastern University - Trincomalee Campus",
+        "Eastern University -Trincomalee Campus": "Eastern University - Trincomalee Campus",
+        "University of Jaffna - Vavuniya Campus": "University of Vavuniya, Sri Lanka",
+    }
+
+    return alias_map.get(text, text)
+
+
+def is_valid_university_name(name: str) -> bool:
+    """Filter obvious OCR/parser artifacts that are not institution names."""
+    text = clean_text(name)
+    if not text:
+        return False
+    if len(text) < 6:
+        return False
+    if text in {"TMLE", "ICT"}:
+        return False
+    if "HONOURS" in text:
+        return False
+    has_institution_keyword = any(
+        kw in text for kw in ["University", "Institute", "Academy", "Campus"]
+    )
+    return has_institution_keyword
+
+
+def normalize_course_name(name: str) -> str:
+    """Standardize spacing and punctuation for course names."""
+    text = clean_text(name)
+    text = re.sub(r"\s+", " ", text)
+    text = text.replace("  ", " ")
+    text = text.strip(" ,")
+    return text
+
+
+def extract_headers(page: pymupdf.Page) -> list[dict]:
     """Extract course/university header blocks from a PDF page."""
     items: list[tuple[float, tuple[float, float], str]] = []
     text = page.get_text("dict")
@@ -162,12 +210,34 @@ def parse_cutoff(value: str):
         return None, f"UNPARSED:{value}"
 
 
+def infer_year_metadata(pdf_path: Path) -> tuple[str, int, str, str]:
+    """Infer academic-year metadata from filenames like COP_2018_2019.pdf."""
+    match = re.search(r"(\d{4})_(\d{4})", pdf_path.stem)
+    if not match:
+        raise ValueError(
+            f"Could not infer academic year from file name: {pdf_path.name}"
+        )
+
+    start_year = int(match.group(1))
+    end_year = int(match.group(2))
+    academic_year = f"{start_year}/{end_year}"
+    year_id = f"YEAR_{start_year}_{end_year}"
+
+    # Publication date is standardized as end-of-July of the second year.
+    publication_date = f"{end_year}-07-31"
+    exam_year = start_year
+
+    return academic_year, exam_year, publication_date, year_id
+
+
 def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Extract a PDF and optionally write CSV outputs into `output_dir`."""
     if write_csv:
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    pdf = fitz.open(pdf_path)
+    academic_year, exam_year, publication_date, year_id = infer_year_metadata(pdf_path)
+
+    pdf = pymupdf.open(pdf_path)
     fact_rows: List[dict] = []
     validation: List[str] = []
 
@@ -224,14 +294,17 @@ def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tup
 
                 for col_index, header in enumerate(headers, start=1):
                     cutoff_z, cutoff_status = parse_cutoff(row[col_index])
-                    course_name = header["CourseName"]
-                    university_name = header["UniversityName"]
+                    course_name = normalize_course_name(header["CourseName"])
+                    university_name = normalize_university_name(header["UniversityName"])
+
+                    if not is_valid_university_name(university_name):
+                        continue
 
                     fact_rows.append(
                         {
-                            "AcademicYear": ACADEMIC_YEAR,
-                            "ExamYear": EXAM_YEAR,
-                            "PublicationDate": PUBLICATION_DATE,
+                            "AcademicYear": academic_year,
+                            "ExamYear": exam_year,
+                            "PublicationDate": publication_date,
                             "CourseID": make_id("COURSE", course_name),
                             "CourseName": course_name,
                             "UniversityID": make_id("UNIVERSITY", university_name),
@@ -270,10 +343,10 @@ def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tup
     year_dim = pd.DataFrame(
         [
             {
-                "YearID": "YEAR_2025_2026",
-                "AcademicYear": ACADEMIC_YEAR,
-                "ExamYear": EXAM_YEAR,
-                "PublicationDate": PUBLICATION_DATE,
+                "YearID": year_id,
+                "AcademicYear": academic_year,
+                "ExamYear": exam_year,
+                "PublicationDate": publication_date,
             }
         ]
     )
@@ -300,7 +373,7 @@ def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tup
     report_lines = [
         "Sri Lanka A/L UGC cutoff extraction validation",
         f"Source: {pdf_path.name}",
-        f"Academic year: {ACADEMIC_YEAR}",
+        f"Academic year: {academic_year}",
         f"Total fact rows: {len(fact):,}",
         f"Unique courses: {fact['CourseID'].nunique():,}",
         f"Unique universities: {fact['UniversityID'].nunique():,}",

@@ -13,9 +13,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Extract UGC Sri Lankan A/L admission cutoff tables.")
     parser.add_argument("pdf", type=Path, nargs="?", default=None, help="Path to a specific UGC PDF. If omitted, batch mode scans `--input-dir`.")
     parser.add_argument("-i", "--input-dir", type=Path, default=Path("data/raw"), help="Directory with PDFs to ingest.")
-    parser.add_argument("-b", "--output-base", type=Path, default=Path("data/bronze"), help="Output directory for batch CSV/Parquet outputs.")
+    parser.add_argument("-b", "--output-base", type=Path, default=Path("data/bronze"), help="Base output directory for batch outputs.")
     parser.add_argument("-o", "--output", type=Path, default=Path("al_cutoff_data"), help="Output directory for single-PDF runs.")
-    parser.add_argument("--db", type=Path, default=Path("data/bronze/al_cutoffs.db"), help="SQLite database path.")
+    parser.add_argument("--db", type=Path, default=Path("data/bronze/db/al_cutoffs.db"), help="SQLite database path.")
     parser.add_argument("--no-db", action="store_true", help="Skip SQLite output.")
     parser.add_argument("--append-db", action="store_true", help="Append to the database instead of overwriting it.")
     return parser
@@ -66,7 +66,10 @@ def run_batch(input_dir: Path, output_base: Path, db_path: Path, use_db: bool, o
         write_tables_to_sqlite(db_path, all_fact, all_course, all_university, all_district, all_year, overwrite=overwrite_db)
 
     write_combined_outputs(output_base, all_fact, all_course, all_university, all_district, all_year)
-    print(f"Combined CSVs and Parquet files written to: {output_base.resolve()}")
+    print(f"CSV files written to: {(output_base / 'csv').resolve()}")
+    print(f"Parquet files written to: {(output_base / 'parquet').resolve()}")
+    if use_db:
+        print(f"SQLite DB written to: {db_path.resolve()}")
 
 
 def main() -> None:

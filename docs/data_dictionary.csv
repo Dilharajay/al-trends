@@ -1,0 +1,26 @@
+TableName,ColumnName,DataType,Description,KeyType,Nullable,Example
+fact_cutoffs,AcademicYear,text,Academic cycle (format YYYY/YYYY),FK to dim_year via AcademicYear,No,2025/2026
+fact_cutoffs,ExamYear,integer,Exam year corresponding to AcademicYear,None,No,2025
+fact_cutoffs,PublicationDate,date,Publication date of source table,None,No,2026-07-31
+fact_cutoffs,CourseID,text,Stable hashed course key,FK to dim_course,No,COURSE_D5E20A1F
+fact_cutoffs,CourseName,text,Standardized course name,Denormalized attribute,No,AGRI BUSINESS MANAGEMENT
+fact_cutoffs,UniversityID,text,Stable hashed university key,FK to dim_university,No,UNIVERSITY_E728A0EF
+fact_cutoffs,UniversityName,text,Standardized university name,Denormalized attribute,No,University of Ruhuna
+fact_cutoffs,DistrictID,text,Stable hashed district key,FK to dim_district,No,DISTRICT_8F1646E1
+fact_cutoffs,DistrictName,text,District name from official district list,Denormalized attribute,No,AMPARA
+fact_cutoffs,CutoffZ,decimal,Numeric cutoff Z value when available,None,Yes,1.4932
+fact_cutoffs,CutoffStatus,text,Availability/quality status of cutoff value,None,No,AVAILABLE
+fact_cutoffs,AllIslandMerit,boolean,True when row belongs to all-island merit selection,None,No,False
+fact_cutoffs,AptitudeTest,boolean,True when aptitude/practical test applies,None,No,False
+fact_cutoffs,Page,integer,Page number in source PDF,None,No,6
+fact_cutoffs,SourceFile,text,Source PDF filename,None,No,COP_2018_2019.pdf
+dim_course,CourseID,text,Stable hashed course key,PK,No,COURSE_D5E20A1F
+dim_course,CourseName,text,Standardized course name,None,No,AGRI BUSINESS MANAGEMENT
+dim_university,UniversityID,text,Stable hashed university key,PK,No,UNIVERSITY_E728A0EF
+dim_university,UniversityName,text,Standardized university/institute name,None,No,University of Ruhuna
+dim_district,DistrictID,text,Stable hashed district key,PK,No,DISTRICT_8F1646E1
+dim_district,DistrictName,text,Official district name,None,No,AMPARA
+dim_year,YearID,text,Year dimension key (YEAR_YYYY_YYYY),PK,No,YEAR_2025_2026
+dim_year,AcademicYear,text,Academic cycle (format YYYY/YYYY),Business key,No,2025/2026
+dim_year,ExamYear,integer,Exam year corresponding to academic cycle,None,No,2025
+dim_year,PublicationDate,date,Publication date for that academic cycle,None,No,2026-07-31

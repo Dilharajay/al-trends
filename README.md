@@ -2,11 +2,11 @@
 
 A modular Python project for extracting Sri Lankan GCE A/L university cutoff tables from PDF documents and consolidating them into a single storage layer.
 
-This project reads PDFs from `data/raw`, parses the course/university cutoff tables, and writes a unified output set to `data/bronze`:
+This project reads PDFs from `data/raw`, parses the course/university cutoff tables, and writes a unified output set to `data/bronze` in separate folders:
 
-- SQLite database: `al_cutoffs.db`
-- combined CSVs: `fact_cutoffs.csv`, `dim_course.csv`, `dim_university.csv`, `dim_district.csv`, `dim_year.csv`
-- Parquet exports with the same schema: `.parquet` variants of each table
+- SQLite database: `db/al_cutoffs.db`
+- combined CSVs: `csv/fact_cutoffs.csv`, `csv/dim_course.csv`, `csv/dim_university.csv`, `csv/dim_district.csv`, `csv/dim_year.csv`
+- Parquet exports: `parquet/fact_cutoffs.parquet`, `parquet/dim_course.parquet`, `parquet/dim_university.parquet`, `parquet/dim_district.parquet`, `parquet/dim_year.parquet`
 
 ## Features
 
@@ -101,6 +101,8 @@ Dimension tables:
 - The database is overwritten by default on each batch run.
 - The extractor uses a tolerant parser for older PDF layouts that differ from the latest format.
 - The generated output is intended for downstream analysis in tools such as Power BI, pandas, or DuckDB.
+
+See also: [docs/POWERBI_SCHEMA_SUMMARY.md](docs/POWERBI_SCHEMA_SUMMARY.md)
 
 ## License
 

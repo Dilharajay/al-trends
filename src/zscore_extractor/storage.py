@@ -96,11 +96,17 @@ def write_tables_to_sqlite(
 
 def write_combined_outputs(output_base: Path, fact: pd.DataFrame, course_dim: pd.DataFrame, university_dim: pd.DataFrame, district_dim: pd.DataFrame, year_dim: pd.DataFrame) -> None:
     output_base.mkdir(parents=True, exist_ok=True)
-    fact.to_csv(output_base / "fact_cutoffs.csv", index=False, encoding="utf-8-sig")
-    course_dim.to_csv(output_base / "dim_course.csv", index=False, encoding="utf-8-sig")
-    university_dim.to_csv(output_base / "dim_university.csv", index=False, encoding="utf-8-sig")
-    district_dim.to_csv(output_base / "dim_district.csv", index=False, encoding="utf-8-sig")
-    year_dim.to_csv(output_base / "dim_year.csv", index=False, encoding="utf-8-sig")
+
+    csv_dir = output_base / "csv"
+    parquet_dir = output_base / "parquet"
+    csv_dir.mkdir(parents=True, exist_ok=True)
+    parquet_dir.mkdir(parents=True, exist_ok=True)
+
+    fact.to_csv(csv_dir / "fact_cutoffs.csv", index=False, encoding="utf-8-sig")
+    course_dim.to_csv(csv_dir / "dim_course.csv", index=False, encoding="utf-8-sig")
+    university_dim.to_csv(csv_dir / "dim_university.csv", index=False, encoding="utf-8-sig")
+    district_dim.to_csv(csv_dir / "dim_district.csv", index=False, encoding="utf-8-sig")
+    year_dim.to_csv(csv_dir / "dim_year.csv", index=False, encoding="utf-8-sig")
 
     for name, df in {
         "fact_cutoffs": fact,
@@ -109,4 +115,4 @@ def write_combined_outputs(output_base: Path, fact: pd.DataFrame, course_dim: pd
         "dim_district": district_dim,
         "dim_year": year_dim,
     }.items():
-        df.to_parquet(output_base / f"{name}.parquet", index=False)
+        df.to_parquet(parquet_dir / f"{name}.parquet", index=False)
