@@ -2,11 +2,12 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import numpy as np
 
 st.set_page_config(page_title="Sri Lanka A/L University Admission Analytics", layout="wide")
 
 st.title("Sri Lanka A/L University Admission Analytics Dashboard")
-st.markdown("Explore university admission Z-score cutoffs through descriptive, diagnostic, and predictive analytics.")
+st.markdown("Explore university admission Z-score cutoffs through descriptive, diagnostic, predictive, and student analytics.")
 
 @st.cache_data
 def load_data():
@@ -36,8 +37,8 @@ df = load_data()
 # Ensure CutoffZ is numeric
 df['CutoffZ'] = pd.to_numeric(df['CutoffZ'], errors='coerce')
 
-# Tabs for the three layers
-tab1, tab2, tab3 = st.tabs(["Layer 1: Descriptive", "Layer 2: Diagnostic", "Layer 3: Student Analytics"])
+# Tabs for the four layers
+tab1, tab2, tab3, tab4 = st.tabs(["Layer 1: Descriptive", "Layer 2: Diagnostic", "Layer 3: Student Analytics", "Layer 4: Predictive"])
 
 with tab1:
     st.header("Descriptive Analytics: What Happened?")
@@ -187,3 +188,81 @@ with tab3:
             st.warning("Based on the reference year, no courses appear to be within reach. Try a lower threshold or different reference year.")
     else:
         st.info("No cutoff data available for the selected year and district.")
+
+with tab4:
+    st.header("Predictive Analytics: What might next year's cutoffs look like?")
+    st.markdown("Estimate the next cutoff based on historical linear trends.")
+    
+    col_p1, col_p2, col_p3 = st.columns(3)
+    with col_p1:
+        selected_course_pred = st.selectbox("Select Course", sorted(df["CourseName"].unique()), key="pred_course")
+    with col_p2:
+        selected_district_pred = st.selectbox("Select District", sorted(df["DistrictName"].unique()), key="pred_dist")
+    with col_p3:
+        target_exam_year = st.number_input("Target Exam Year to Predict", min_value=int(df["ExamYear"].max())+1, max_value=2030, value=int(df["ExamYear"].max())+1, step=1, key="pred_year")
+        
+    df_pred = df[(df["CourseName"] == selected_course_pred) & (df["DistrictName"] == selected_district_pred)]
+    df_pred = df_pred.dropna(subset=['CutoffZ', 'ExamYear'])
+    
+    if not df_pred.empty:
+        # Group by university
+        predictions = []
+        for uni, group in df_pred.groupby("UniversityName"):
+            group = group.sort_values("ExamYear")
+            if len(group) >= 2:
+                # Simple linear regression
+                z = np.polyfit(group["ExamYear"], group["CutoffZ"], 1)
+                p = np.poly1d(z)
+                predicted_cutoff = p(target_exam_year)
+                
+                # Calculate standard deviation of residuals for confidence margin
+                residuals = group["CutoffZ"] - p(group["ExamYear"])
+                std_dev = np.std(residuals) if len(residuals) > 0 else 0
+                
+                predictions.append({
+                    "UniversityName": uni,
+                    "Historical Data Points": len(group),
+                    "Recent Cutoff": group.iloc[-1]["CutoffZ"],
+                    "Predicted Cutoff": round(predicted_cutoff, 4),
+                    "Margin (±)": round(std_dev, 4)
+                })
+            else:
+                predictions.append({
+                    "UniversityName": uni,
+                    "Historical Data Points": len(group),
+                    "Recent Cutoff": group.iloc[-1]["CutoffZ"],
+                    "Predicted Cutoff": "Insufficient Data",
+                    "Margin (±)": "N/A"
+                })
+                
+        pred_df = pd.DataFrame(predictions)
+        
+        st.subheader(f"Projection for {target_exam_year}")
+        st.dataframe(pred_df, width='stretch')
+        
+        # Visualize trend for the universities that had enough data
+        fig_pred = px.scatter(
+            df_pred,
+            x="ExamYear",
+            y="CutoffZ",
+            color="UniversityName",
+            title=f"Historical Trends vs Projection for {target_exam_year}"
+        )
+        fig_pred.update_traces(mode="lines+markers")
+        
+        # Add prediction points
+        valid_preds = pred_df[pred_df["Predicted Cutoff"] != "Insufficient Data"]
+        if not valid_preds.empty:
+            for _, row in valid_preds.iterrows():
+                fig_pred.add_scatter(
+                    x=[target_exam_year],
+                    y=[row["Predicted Cutoff"]],
+                    mode="markers",
+                    marker=dict(symbol="star", size=12),
+                    name=f"Predicted: {row['UniversityName']}"
+                )
+        
+        st.plotly_chart(fig_pred, width='stretch')
+        st.caption("Note: This is a simple linear projection based on historical cutoffs. Actual cutoffs depend heavily on exam difficulty and student performance distributions, which are highly variable.")
+    else:
+        st.info("No data available for this selection to run predictions.")
