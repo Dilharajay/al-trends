@@ -1,0 +1,45 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "17bc93b4a425be784da5",
+  "position": {
+    "x": 250,
+    "y": 130,
+    "z": 8000,
+    "height": 590,
+    "width": 711.66666666666674,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_year"
+                    }
+                  },
+                  "Property": "AcademicYear"
+                }
+              },
+              "queryRef": "dim_year.AcademicYear",
+              "nativeQueryRef": "AcademicYear",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": []
+        }
+      },
+      "sortDefinition": {
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

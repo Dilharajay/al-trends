@@ -1,0 +1,20 @@
+relationship fact_cutoffs_dim_course
+	fromColumn: fact_cutoffs.CourseID
+	toColumn: dim_course.CourseID
+
+relationship fact_cutoffs_dim_university
+	fromColumn: fact_cutoffs.UniversityID
+	toColumn: dim_university.UniversityID
+
+relationship fact_cutoffs_dim_district
+	fromColumn: fact_cutoffs.DistrictID
+	toColumn: dim_district.DistrictID
+
+relationship bridge_course_combination_dim_course
+	fromColumn: bridge_course_combination.CourseID
+	toColumn: dim_course.CourseID
+
+relationship bridge_course_combination_dim_combination
+	fromColumn: bridge_course_combination.combination_id
+	toColumn: dim_combination.combination_id
+

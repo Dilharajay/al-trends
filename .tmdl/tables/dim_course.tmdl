@@ -1,0 +1,21 @@
+table dim_course
+	column CourseID
+		dataType: string
+		sourceColumn: CourseID
+
+	column CourseName
+		dataType: string
+		sourceColumn: CourseName
+
+	column Degree
+		dataType: string
+		sourceColumn: Degree
+
+	partition dim_course = m
+		mode: import
+		source =
+			let 
+			    Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\dim_course.parquet")),
+			    #"Added Degree" = Table.AddColumn(Source, "Degree", each [CourseName], type text)
+			in 
+			    #"Added Degree"

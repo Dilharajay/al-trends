@@ -1,0 +1,32 @@
+table dim_combination
+	lineageTag: 04a2153c-f1d6-48f1-a0f0-1e58ddf21243
+
+	column combination_id
+		dataType: string
+		lineageTag: 274a66a3-af41-4fc4-81bb-ca0e597a8f75
+		sourceColumn: combination_id
+
+	column stream
+		dataType: string
+		lineageTag: 59f2652d-c795-4dfc-b051-8dff4171b7b3
+		sourceColumn: stream
+
+	column subject_1
+		dataType: string
+		lineageTag: 50f59afa-3ad7-4f2f-a95f-52fda503918b
+		sourceColumn: subject_1
+
+	column subject_2
+		dataType: string
+		lineageTag: 8dd173d8-6fe2-4d9d-bae3-5f158032a475
+		sourceColumn: subject_2
+
+	column subject_3
+		dataType: string
+		lineageTag: 8f93cedd-d310-4497-b2b5-aed461cac8cd
+		sourceColumn: subject_3
+
+	partition dim_combination = m
+		mode: import
+		source = let Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\dim_combination.parquet")) in Source
+

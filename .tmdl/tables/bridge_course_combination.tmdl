@@ -1,0 +1,18 @@
+table bridge_course_combination
+	isHidden
+	lineageTag: d7fc56c5-3be7-4e09-b55a-08d6719f894c
+
+	column CourseID
+		dataType: string
+		lineageTag: c4907414-5244-4588-86f6-ff6134e351d2
+		sourceColumn: CourseID
+
+	column combination_id
+		dataType: string
+		lineageTag: 650993e3-6974-4426-98b8-b5133da6bf5f
+		sourceColumn: combination_id
+
+	partition bridge_course_combination = m
+		mode: import
+		source = let Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\bridge_course_combination.parquet")) in Source
+

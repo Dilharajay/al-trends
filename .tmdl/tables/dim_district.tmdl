@@ -1,0 +1,17 @@
+table dim_district
+	lineageTag: 616963ac-54f0-4705-97fc-15b3c9adfc18
+
+	column DistrictID
+		dataType: string
+		lineageTag: 455d6c05-16e8-46bd-909a-1e8df9924503
+		sourceColumn: DistrictID
+
+	column DistrictName
+		dataType: string
+		lineageTag: 8be2afaf-fa26-4605-902b-11655bc44baa
+		sourceColumn: DistrictName
+
+	partition dim_district = m
+		mode: import
+		source = let Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\dim_district.parquet")) in Source
+

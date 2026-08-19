@@ -8,3 +8,25 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Data outputs (keep raw PDFs if needed, but ignore processed data)
+data/bronze/
+*.db
+*.csv
+*.parquet
+*.sqlite
+
+# ML Models (large binaries)
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.onnx
+
+# Power BI binaries and local state
+*.pbix
+powerbi/**/*.pbidata
+powerbi/**/*.pbiuser
+powerbi/**/.pbi/
+
+# ZenML local state
+.zen/

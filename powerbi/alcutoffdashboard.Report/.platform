@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "alcutoffdashboard"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "5fdfa613-06be-405a-b2bf-05252699d81d"
+  }
+}

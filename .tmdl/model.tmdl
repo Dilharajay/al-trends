@@ -1,0 +1,25 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_ProTooling = ["MCP-PBIModeling"]
+
+annotation PBI_QueryOrder = ["bridge_course_combination","dim_combination","dim_course","dim_district","dim_university","dim_year","fact_cutoffs","fact_course_intake"]
+
+ref table bridge_course_combination
+ref table dim_combination
+ref table dim_course
+ref table dim_district
+ref table dim_university
+ref table dim_year
+ref table fact_cutoffs
+ref table fact_course_intake
+
+ref cultureInfo en-US

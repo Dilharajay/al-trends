@@ -1,0 +1,84 @@
+table fact_cutoffs
+
+	/// The average Z-score cutoff for the selected context.
+	measure 'Average Cutoff Z' = AVERAGE(fact_cutoffs[CutoffZ])
+
+	/// The highest Z-score cutoff for the selected context.
+	measure 'Max Cutoff Z' = MAX(fact_cutoffs[CutoffZ])
+
+	/// The lowest Z-score cutoff for the selected context.
+	measure 'Min Cutoff Z' = MIN(fact_cutoffs[CutoffZ])
+
+	/// Count of courses where a valid Z-score was published.
+	measure 'Available Cutoffs' =
+			CALCULATE(
+			    COUNTROWS(fact_cutoffs),
+			    fact_cutoffs[CutoffStatus] = "AVAILABLE"
+			)
+
+	/// Distinct count of unique courses that had an available cutoff.
+	measure 'Available Courses' =
+			CALCULATE(
+			    DISTINCTCOUNT(fact_cutoffs[CourseID]),
+			    fact_cutoffs[CutoffStatus] = "AVAILABLE"
+			)
+
+	/// Count of courses marked as Not Qualified for Cutoff (NQC).
+	measure 'NQC Count' =
+			CALCULATE(
+			    COUNTROWS(fact_cutoffs),
+			    fact_cutoffs[CutoffStatus] = "NQC"
+			)
+
+	column ExamYear
+		dataType: int64
+		isHidden
+		sourceColumn: ExamYear
+
+	column CourseID
+		dataType: string
+		isHidden
+		sourceColumn: CourseID
+
+	column UniversityID
+		dataType: string
+		isHidden
+		sourceColumn: UniversityID
+
+	column DistrictID
+		dataType: string
+		isHidden
+		sourceColumn: DistrictID
+
+	column CutoffZ
+		dataType: double
+		sourceColumn: CutoffZ
+
+	column CutoffStatus
+		dataType: string
+		sourceColumn: CutoffStatus
+
+	column AllIslandMerit
+		dataType: boolean
+		sourceColumn: AllIslandMerit
+
+	column AptitudeTest
+		dataType: boolean
+		sourceColumn: AptitudeTest
+
+	column Page
+		dataType: int64
+		sourceColumn: Page
+
+	column SourceFile
+		dataType: string
+		sourceColumn: SourceFile
+
+	partition fact_cutoffs = m
+		mode: import
+		source =
+			let 
+			    Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\fact_cutoffs.parquet")),
+			    #"Removed Columns" = Table.RemoveColumns(Source, {"AcademicYear", "PublicationDate", "CourseName", "UniversityName", "DistrictName"})
+			in 
+			    #"Removed Columns"

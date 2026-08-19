@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "e24dc2545f733051215e",
+  "position": {
+    "x": 0,
+    "y": 381.89563480279674,
+    "z": 6000,
+    "height": 163,
+    "width": 250,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "listSlicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_district"
+                    }
+                  },
+                  "Property": "DistrictName"
+                }
+              },
+              "queryRef": "dim_district.DistrictName",
+              "nativeQueryRef": "DistrictName",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

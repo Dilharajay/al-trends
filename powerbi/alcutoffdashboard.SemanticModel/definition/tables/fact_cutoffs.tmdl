@@ -1,0 +1,100 @@
+table fact_cutoffs
+	lineageTag: 00b61626-a822-4a29-9d89-1d12090efaec
+
+	measure 'Average Cutoff Z' = AVERAGE(fact_cutoffs[CutoffZ])
+		lineageTag: f390e50b-eb35-4964-8867-e1bace163afb
+
+	measure 'Available Cources' =
+			CALCULATE(
+			    DISTINCTCOUNT(fact_cutoffs[CourseID]),
+			    fact_cutoffs[CutoffStatus] = "AVAILABLE"
+			)
+		formatString: 0
+		lineageTag: b89e2529-7a54-4bb4-b990-64711a070e71
+
+	measure 'NQC Count' =
+			CALCULATE(
+			    COUNTROWS(fact_cutoffs),
+			    fact_cutoffs[CutoffStatus] = "NQC"
+			)
+		lineageTag: b709bfb6-27a2-4972-86ef-5d005f147756
+
+	column AcademicYear
+		dataType: string
+		lineageTag: 8518ef08-6713-4a0a-8fda-18e76796d5af
+		sourceColumn: AcademicYear
+
+	column ExamYear
+		dataType: int64
+		lineageTag: f3d95e3d-e0e1-4e26-acef-cb2c82eac9e0
+		sourceColumn: ExamYear
+
+	column PublicationDate
+		dataType: string
+		lineageTag: bc9576ae-adaf-47a5-851a-eabe179a1097
+		sourceColumn: PublicationDate
+
+	column CourseID
+		dataType: string
+		lineageTag: 783b3ecb-10be-4ca6-bebe-1812ba281f85
+		sourceColumn: CourseID
+
+	column CourseName
+		dataType: string
+		lineageTag: cc6dadfc-0c4a-4cc6-9cf3-105e2c9ef2bd
+		sourceColumn: CourseName
+
+	column UniversityID
+		dataType: string
+		lineageTag: c9848fa7-ad14-4b22-9151-71572dee21b8
+		sourceColumn: UniversityID
+
+	column UniversityName
+		dataType: string
+		lineageTag: a8176103-0e53-4d81-b796-27a96af945b6
+		sourceColumn: UniversityName
+
+	column DistrictID
+		dataType: string
+		lineageTag: 0df747dd-0921-4b1d-b53b-2caf25e63d73
+		sourceColumn: DistrictID
+
+	column DistrictName
+		dataType: string
+		lineageTag: eea47287-24cc-4579-bc5d-e8041879185d
+		sourceColumn: DistrictName
+
+	column CutoffZ
+		dataType: double
+		lineageTag: df8c671b-1c0f-4f56-87b5-6d5fb70ba350
+		sourceColumn: CutoffZ
+
+	column CutoffStatus
+		dataType: string
+		lineageTag: 878f500a-1436-4a12-bd34-ca7a8045b5b9
+		sourceColumn: CutoffStatus
+
+	column AllIslandMerit
+		dataType: boolean
+		lineageTag: b82a03cd-cee8-480c-a13a-c552f0673327
+		sourceColumn: AllIslandMerit
+
+	column AptitudeTest
+		dataType: boolean
+		lineageTag: 19350ea8-5769-4e6f-80b0-32735484c9aa
+		sourceColumn: AptitudeTest
+
+	column Page
+		dataType: int64
+		lineageTag: 05afa9e6-929c-4fae-89e6-03e0f3b36da5
+		sourceColumn: Page
+
+	column SourceFile
+		dataType: string
+		lineageTag: 5b2a4307-fed3-4af4-a663-787bdcd6a20e
+		sourceColumn: SourceFile
+
+	partition fact_cutoffs = m
+		mode: import
+		source = let Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\fact_cutoffs.parquet")) in Source
+

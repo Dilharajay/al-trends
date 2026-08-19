@@ -25,9 +25,9 @@ def run_batch(input_dir: Path, output_base: Path, db_path: Path, use_db: bool, o
     if not input_dir.exists() or not input_dir.is_dir():
         raise FileNotFoundError(f"Input directory not found: {input_dir}")
 
-    pdf_files = sorted(input_dir.glob("*.pdf"))
+    pdf_files = sorted(input_dir.glob("COP_*.pdf"))
     if not pdf_files:
-        raise FileNotFoundError(f"No PDF files found in: {input_dir}")
+        raise FileNotFoundError(f"No COP PDF files found in: {input_dir}")
 
     fact_dfs = []
     course_dims = []
@@ -60,12 +60,15 @@ def run_batch(input_dir: Path, output_base: Path, db_path: Path, use_db: bool, o
     all_university = pd.concat(university_dims, ignore_index=True).drop_duplicates(subset=["UniversityID"]).reset_index(drop=True)
     all_district = district_dims[0]
     all_year = pd.concat(year_dims, ignore_index=True).drop_duplicates(subset=["YearID"]).reset_index(drop=True)
+    
+    from .ugc_codes import extract_all_intakes
+    all_intakes = extract_all_intakes()
 
     if use_db:
         print(f"Writing aggregated data to DB: {db_path} (overwrite={overwrite_db})")
-        write_tables_to_sqlite(db_path, all_fact, all_course, all_university, all_district, all_year, overwrite=overwrite_db)
+        write_tables_to_sqlite(db_path, all_fact, all_course, all_university, all_district, all_year, all_intakes, overwrite=overwrite_db)
 
-    write_combined_outputs(output_base, all_fact, all_course, all_university, all_district, all_year)
+    write_combined_outputs(output_base, all_fact, all_course, all_university, all_district, all_year, all_intakes)
     print(f"CSV files written to: {(output_base / 'csv').resolve()}")
     print(f"Parquet files written to: {(output_base / 'parquet').resolve()}")
     if use_db:

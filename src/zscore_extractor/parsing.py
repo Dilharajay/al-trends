@@ -20,7 +20,18 @@ def clean_text(value: str | None) -> str:
 
 
 def make_id(prefix: str, text: str) -> str:
-    """Stable ID from the entity name."""
+    """Stable ID from the entity name, preferring official UGC codes if available."""
+    from .ugc_codes import get_course_code, get_university_code
+    
+    if prefix == "COURSE":
+        code = get_course_code(text)
+        if code:
+            return code
+    elif prefix == "UNIVERSITY":
+        code = get_university_code(text)
+        if code:
+            return code
+            
     digest = hashlib.sha1(text.upper().encode("utf-8")).hexdigest()[:8].upper()
     return f"{prefix}_{digest}"
 
@@ -77,8 +88,10 @@ def is_valid_university_name(name: str) -> bool:
 def normalize_course_name(name: str) -> str:
     """Standardize spacing and punctuation for course names."""
     text = clean_text(name)
+    # Normalize ampersand to "AND" — UGC PDFs inconsistently use both forms
+    # for the same course across different years, which fragments CourseIDs.
+    text = re.sub(r"\s*&\s*", " AND ", text)
     text = re.sub(r"\s+", " ", text)
-    text = text.replace("  ", " ")
     text = text.strip(" ,")
     return text
 
@@ -265,6 +278,70 @@ def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tup
 
             if not table:
                 raise ValueError(f"Page {page_number}: empty table.")
+
+            # --- Reorder headers to match pdfplumber column order ---
+            # The pdfplumber header row contains reversed text for rotated
+            # columns (e.g. ")obmoloC fo ENICIDEM ytisrevinU(" which is
+            # "MEDICINE (University of Colombo)" reversed).  We use this to
+            # determine the true left-to-right column order and re-sort the
+            # headers that extract_headers() returned in an arbitrary order.
+            header_row_cells = table[0][1:]  # skip the "DISTRICT" cell
+            if len(header_row_cells) == len(headers) and len(headers) > 1:
+                reordered: list[dict] = []
+                used: list[bool] = [False] * len(headers)
+
+                for cell_text in header_row_cells:
+                    if not cell_text:
+                        # If the header cell is empty, fall back to order
+                        for idx, h in enumerate(headers):
+                            if not used[idx]:
+                                reordered.append(h)
+                                used[idx] = True
+                                break
+                        continue
+
+                    # Reverse the cell text to get the readable form
+                    reversed_cell = cell_text[::-1].upper()
+                    # Clean up whitespace
+                    reversed_cell = re.sub(r"\s+", " ", reversed_cell).strip()
+
+                    # Find the best matching header by checking if both the
+                    # course name and a university keyword appear in the cell
+                    best_idx = -1
+                    best_score = -1
+                    for idx, h in enumerate(headers):
+                        if used[idx]:
+                            continue
+                        course_upper = h["CourseName"].upper()
+                        uni_upper = h["UniversityName"].upper()
+
+                        # Split course into words and count matches
+                        course_words = course_upper.split()
+                        uni_words = uni_upper.split()
+                        score = 0
+                        for w in course_words:
+                            if len(w) >= 3 and w in reversed_cell:
+                                score += 1
+                        for w in uni_words:
+                            if len(w) >= 3 and w in reversed_cell:
+                                score += 1
+
+                        if score > best_score:
+                            best_score = score
+                            best_idx = idx
+
+                    if best_idx >= 0:
+                        reordered.append(headers[best_idx])
+                        used[best_idx] = True
+                    else:
+                        # Shouldn't happen, but fall back to next unused
+                        for idx, h in enumerate(headers):
+                            if not used[idx]:
+                                reordered.append(h)
+                                used[idx] = True
+                                break
+
+                headers = reordered
 
             data_rows = [
                 row for row in table[1:]

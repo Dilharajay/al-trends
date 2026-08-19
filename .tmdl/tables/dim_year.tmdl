@@ -1,0 +1,27 @@
+table dim_year
+	lineageTag: 5e123d12-e66b-4bf1-8b99-a4179df6eeae
+
+	column YearID
+		dataType: string
+		lineageTag: 1b300296-0b5b-42d2-92a9-827c419e4b20
+		sourceColumn: YearID
+
+	column AcademicYear
+		dataType: string
+		lineageTag: 9847ab7a-71f0-4398-afe7-ac5adcf90efd
+		sourceColumn: AcademicYear
+
+	column ExamYear
+		dataType: int64
+		lineageTag: 994cb81e-3b6e-4c65-bdaf-1d1babd734a7
+		sourceColumn: ExamYear
+
+	column PublicationDate
+		dataType: string
+		lineageTag: 76a587a6-3154-4d33-872b-7d8eff92fdbb
+		sourceColumn: PublicationDate
+
+	partition dim_year = m
+		mode: import
+		source = let Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\dim_year.parquet")) in Source
+

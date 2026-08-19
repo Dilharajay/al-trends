@@ -1,0 +1,17 @@
+table dim_university
+	lineageTag: d2de97f2-3ff5-4be5-b0c5-04537b4461c0
+
+	column UniversityID
+		dataType: string
+		lineageTag: e0b80fe2-58f7-408e-a171-22489e2775fe
+		sourceColumn: UniversityID
+
+	column UniversityName
+		dataType: string
+		lineageTag: cac1482c-032b-4226-82d9-1d39aadf3fb9
+		sourceColumn: UniversityName
+
+	partition dim_university = m
+		mode: import
+		source = let Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\dim_university.parquet")) in Source
+

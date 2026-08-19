@@ -57,7 +57,7 @@ def train_model(df: pd.DataFrame) -> RandomForestRegressor:
     
     preds = model.predict(X_test)
     mae = mean_absolute_error(y_test, preds)
-    rmse = mean_squared_error(y_test, preds, squared=False)
+    rmse = mean_squared_error(y_test, preds) ** 0.5
     print(f"Model trained. Validation MAE: {mae:.4f}, RMSE: {rmse:.4f}")
     
     os.makedirs("models", exist_ok=True)

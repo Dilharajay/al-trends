@@ -1,0 +1,26 @@
+table fact_course_intake
+
+	/// Total available seats (intake) for the course in the given academic year.
+	measure 'Total Intake' = SUM(fact_course_intake[Intake])
+
+	column AcademicYear
+		dataType: string
+		sourceColumn: AcademicYear
+
+	column CourseID
+		dataType: string
+		isHidden
+		sourceColumn: CourseID
+
+	column Intake
+		dataType: int64
+		sourceColumn: Intake
+
+	partition fact_course_intake = m
+		mode: import
+		source =
+			let 
+			    Source = Parquet.Document(File.Contents("C:\Users\Dilhara Jayawardhana\Projects\Dev\DS-Projects\al-trends\data\bronze\parquet\fact_course_intake.parquet"))
+			in 
+			    Source
+

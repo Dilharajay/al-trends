@@ -13,6 +13,7 @@ def write_tables_to_sqlite(
     university_dim: pd.DataFrame,
     district_dim: pd.DataFrame,
     year_dim: pd.DataFrame,
+    intake_fact: pd.DataFrame,
     overwrite: bool = True,
 ) -> None:
     """Create schema and write tables into a SQLite database."""
@@ -60,6 +61,11 @@ def write_tables_to_sqlite(
             Page INTEGER,
             SourceFile TEXT
         );
+        CREATE TABLE IF NOT EXISTS fact_course_intake (
+            AcademicYear TEXT,
+            CourseID TEXT,
+            Intake INTEGER
+        );
         """
     )
 
@@ -69,6 +75,7 @@ def write_tables_to_sqlite(
         cur.execute("DELETE FROM dim_district")
         cur.execute("DELETE FROM dim_year")
         cur.execute("DELETE FROM fact_cutoffs")
+        cur.execute("DELETE FROM fact_course_intake")
 
     cur.executemany(
         "INSERT OR IGNORE INTO dim_course (CourseID, CourseName) VALUES (?, ?)",
@@ -90,11 +97,12 @@ def write_tables_to_sqlite(
     )
 
     fact.to_sql("fact_cutoffs", conn, if_exists="append", index=False)
+    intake_fact.to_sql("fact_course_intake", conn, if_exists="append", index=False)
     conn.commit()
     conn.close()
 
 
-def write_combined_outputs(output_base: Path, fact: pd.DataFrame, course_dim: pd.DataFrame, university_dim: pd.DataFrame, district_dim: pd.DataFrame, year_dim: pd.DataFrame) -> None:
+def write_combined_outputs(output_base: Path, fact: pd.DataFrame, course_dim: pd.DataFrame, university_dim: pd.DataFrame, district_dim: pd.DataFrame, year_dim: pd.DataFrame, intake_fact: pd.DataFrame) -> None:
     output_base.mkdir(parents=True, exist_ok=True)
 
     csv_dir = output_base / "csv"
@@ -107,6 +115,7 @@ def write_combined_outputs(output_base: Path, fact: pd.DataFrame, course_dim: pd
     university_dim.to_csv(csv_dir / "dim_university.csv", index=False, encoding="utf-8-sig")
     district_dim.to_csv(csv_dir / "dim_district.csv", index=False, encoding="utf-8-sig")
     year_dim.to_csv(csv_dir / "dim_year.csv", index=False, encoding="utf-8-sig")
+    intake_fact.to_csv(csv_dir / "fact_course_intake.csv", index=False, encoding="utf-8-sig")
 
     for name, df in {
         "fact_cutoffs": fact,
@@ -114,5 +123,6 @@ def write_combined_outputs(output_base: Path, fact: pd.DataFrame, course_dim: pd
         "dim_university": university_dim,
         "dim_district": district_dim,
         "dim_year": year_dim,
+        "fact_course_intake": intake_fact,
     }.items():
         df.to_parquet(parquet_dir / f"{name}.parquet", index=False)
