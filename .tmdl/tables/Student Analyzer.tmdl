@@ -1,0 +1,30 @@
+table 'Student Analyzer'
+
+	measure 'Selected Student Z-Score' = SELECTEDVALUE('Student Analyzer'[Student Z-Score], 0.0000)
+
+	measure 'Student Margin' = 
+			VAR StuZ = [Selected Student Z-Score]
+			VAR Cutoff = [Average Cutoff Z]
+			RETURN IF(ISBLANK(Cutoff), BLANK(), StuZ - Cutoff)
+
+	measure 'Eligibility Likelihood' = 
+			VAR margin = [Student Margin]
+			RETURN IF(ISBLANK(margin), BLANK(),
+			    IF(margin >= 0.1, "Safe",
+			        IF(margin >= -0.05, "Possible",
+			            IF(margin >= -0.2, "Competitive", "Unlikely")
+			        )
+			    )
+			)
+
+	column 'Student Z-Score'
+		dataType: double
+		formatString: 0.0000
+		isDataTypeInferred
+		sourceColumn: [Value]
+		summarizeBy: none
+
+	partition 'Student Analyzer' = calculated
+		mode: import
+		source = GENERATESERIES(-3.0, 3.0, 0.05)
+

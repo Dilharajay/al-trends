@@ -30,6 +30,39 @@ table fact_cutoffs
 			    fact_cutoffs[CutoffStatus] = "NQC"
 			)
 
+	measure 'Cutoff Volatility' = STDEV.S(fact_cutoffs[CutoffZ])
+
+	measure 'Volatility Level' = 
+			VAR v = [Cutoff Volatility]
+			RETURN IF(ISBLANK(v), BLANK(), IF(v <= 0.05, "Low", IF(v <= 0.15, "Medium", "High")))
+
+	measure 'Competitiveness Index' = 
+			VAR MeanZ = [Average Cutoff Z]
+			VAR MinMeanZ = MINX(ALL(dim_course), CALCULATE([Average Cutoff Z]))
+			VAR MaxMeanZ = MAXX(ALL(dim_course), CALCULATE([Average Cutoff Z]))
+			VAR NormZ = DIVIDE(MeanZ - MinMeanZ, MaxMeanZ - MinMeanZ) * 100
+			VAR Comp = NormZ - ([Cutoff Volatility] * 10)
+			RETURN IF(ISBLANK(MeanZ), BLANK(), Comp)
+
+	measure 'Competitiveness Band' = 
+			VAR c = [Competitiveness Index]
+			RETURN IF(ISBLANK(c), BLANK(), 
+			    IF(c <= 20, "Lower historical cutoff", 
+			        IF(c <= 40, "Moderate", 
+			            IF(c <= 60, "Competitive", 
+			                IF(c <= 80, "Highly competitive", "Extremely competitive")
+			            )
+			        )
+			    )
+			)
+
+	measure 'YoY Cutoff Change' = 
+			VAR CurrentYear = MAX(dim_year[ExamYear])
+			VAR PrevYear = CurrentYear - 1
+			VAR CurrentZ = [Average Cutoff Z]
+			VAR PrevZ = CALCULATE([Average Cutoff Z], ALL(dim_year), dim_year[ExamYear] = PrevYear)
+			RETURN IF(ISBLANK(CurrentZ) || ISBLANK(PrevZ), BLANK(), CurrentZ - PrevZ)
+
 	column ExamYear
 		dataType: int64
 		isHidden
@@ -57,10 +90,6 @@ table fact_cutoffs
 	column CutoffStatus
 		dataType: string
 		sourceColumn: CutoffStatus
-
-	column AllIslandMerit
-		dataType: boolean
-		sourceColumn: AllIslandMerit
 
 	column AptitudeTest
 		dataType: boolean

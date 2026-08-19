@@ -21,5 +21,6 @@ ref table dim_university
 ref table dim_year
 ref table fact_cutoffs
 ref table fact_course_intake
+ref table 'Student Analyzer'
 
 ref cultureInfo en-US

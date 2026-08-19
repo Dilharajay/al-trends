@@ -18,8 +18,7 @@ def load_data():
         u.UniversityName,
         d.DistrictName,
         f.CutoffZ,
-        f.CutoffStatus,
-        f.AllIslandMerit
+        f.CutoffStatus
     FROM fact_cutoffs f
     JOIN dim_course c ON f.CourseID = c.CourseID
     JOIN dim_university u ON f.UniversityID = u.UniversityID
@@ -44,12 +43,18 @@ def load_data():
     
     df['CutoffZ'] = pd.to_numeric(df['CutoffZ'], errors='coerce')
     
-    # Load seats
-    seats_path = Path("data/bronze/csv/available_seats.csv")
-    if seats_path.exists():
-        seats_df = pd.read_csv(seats_path)
+    # Load seats from fact_course_intake
+    query_seats = """
+    SELECT i.AcademicYear, c.CourseName, i.Intake as Seats
+    FROM fact_course_intake i
+    JOIN dim_course c ON i.CourseID = c.CourseID
+    """
+    try:
+        conn = sqlite3.connect("data/bronze/db/al_cutoffs.db")
+        seats_df = pd.read_sql(query_seats, conn)
+        conn.close()
         df = df.merge(seats_df, on=["AcademicYear", "CourseName"], how="left")
-    else:
+    except Exception:
         df["Seats"] = np.nan
         
     # Calculate Volatility & Competitiveness for each Course

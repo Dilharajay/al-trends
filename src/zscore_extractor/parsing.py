@@ -36,14 +36,14 @@ def make_id(prefix: str, text: str) -> str:
     return f"{prefix}_{digest}"
 
 
-def parse_course_flags(course_name: str) -> tuple[str, bool, bool]:
-    """Remove markers for all-island merit and aptitude tests."""
-    all_island_merit = "*" in course_name
+def parse_course_flags(course_name: str) -> tuple[str, bool]:
+    """Remove markers for aptitude tests."""
     aptitude_test = "#" in course_name
 
     cleaned = course_name.replace("*", "").replace("#", "")
-    cleaned = clean_text(cleaned)
-    return cleaned, all_island_merit, aptitude_test
+    # Deal with leftover trailing hyphens
+    cleaned = cleaned.rstrip(" -")
+    return clean_text(cleaned), aptitude_test
 
 
 def normalize_university_name(name: str) -> str:
@@ -141,12 +141,11 @@ def extract_headers(page: pymupdf.Page) -> list[dict]:
                 if cleaned_val.endswith(")"):
                     raw_course = clean_text(" ".join(pending_course_parts))
                     raw_uni = clean_text(" ".join(pending_uni_parts)).strip("() ")
-                    course_name, all_island_merit, aptitude_test = parse_course_flags(raw_course)
+                    course_name, aptitude_test = parse_course_flags(raw_course)
                     headers.append(
                         {
                             "CourseName": course_name,
                             "UniversityName": raw_uni,
-                            "AllIslandMerit": all_island_merit,
                             "AptitudeTest": aptitude_test,
                         }
                     )
@@ -186,12 +185,11 @@ def extract_headers(page: pymupdf.Page) -> list[dict]:
         if not course_name or not university:
             continue
 
-        c_name, all_island_merit, aptitude_test = parse_course_flags(course_name)
+        c_name, aptitude_test = parse_course_flags(course_name)
         fallback_headers.append(
             {
                 "CourseName": c_name,
                 "UniversityName": university,
-                "AllIslandMerit": all_island_merit,
                 "AptitudeTest": aptitude_test,
             }
         )
@@ -401,7 +399,6 @@ def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tup
                             "DistrictName": district_name,
                             "CutoffZ": cutoff_z,
                             "CutoffStatus": cutoff_status,
-                            "AllIslandMerit": header["AllIslandMerit"],
                             "AptitudeTest": header["AptitudeTest"],
                             "Page": page_number,
                             "SourceFile": pdf_path.name,
@@ -445,7 +442,7 @@ def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tup
         "UniversityID", "UniversityName",
         "DistrictID", "DistrictName",
         "CutoffZ", "CutoffStatus",
-        "AllIslandMerit", "AptitudeTest",
+        "AptitudeTest",
         "Page", "SourceFile",
     ]
     fact = fact[fact_columns]

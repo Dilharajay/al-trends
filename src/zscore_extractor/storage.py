@@ -56,7 +56,6 @@ def write_tables_to_sqlite(
             DistrictName TEXT,
             CutoffZ REAL,
             CutoffStatus TEXT,
-            AllIslandMerit BOOLEAN,
             AptitudeTest BOOLEAN,
             Page INTEGER,
             SourceFile TEXT
