@@ -39,6 +39,9 @@
       }
     ]
   },
+  "publicCustomVisuals": [
+    "BoxandWhiskerByMAQ1823AD39DT234AB532063E128AX"
+  ],
   "resourcePackages": [
     {
       "name": "SharedResources",

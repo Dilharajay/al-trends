@@ -15,71 +15,93 @@ def generate_bridge():
     # Group combination IDs by stream for easy mapping
     stream_combinations = combinations_df.groupby("stream")["combination_id"].apply(list).to_dict()
     
-    bridge_records = []
+    # Vectorized heuristic rules to map course names to A/L streams
+    courses_df['name_lower'] = courses_df['CourseName'].str.lower()
     
-    # Simple heuristic rules to map course names to A/L streams
-    for _, row in courses_df.iterrows():
-        name_lower = row["CourseName"].lower()
-        course_id = row["CourseID"]
-        mapped_streams = set()
-        
-        # Heuristics for Biological Science
-        if any(kw in name_lower for kw in ["medicine", "dental", "veterinary", "biology", "zoology", "botany", "ayurveda", "nursing", "pharmacy", "medical", "biomedical"]):
-            mapped_streams.add("Biological Science")
-            
-        # Heuristics for Physical Science
-        if any(kw in name_lower for kw in ["engineering", "physical science", "physics", "mathematics", "computer science", "architecture", "surveying", "quantity surveying"]):
-            # Note: Engineering Technology is a different stream
-            if "technology" not in name_lower or "computer" in name_lower:
-                mapped_streams.add("Physical Science")
-                
-        # Heuristics for Commerce
-        if any(kw in name_lower for kw in ["commerce", "management", "business", "accounting", "finance", "estate management"]):
-            mapped_streams.add("Commerce")
-            
-        # Heuristics for Arts
-        if any(kw in name_lower for kw in ["arts", "law", "languages", "translation", "social", "teaching", "education", "design", "music", "dance", "drama"]):
-            mapped_streams.add("Arts")
-            
-        # Heuristics for Technology
-        if any(kw in name_lower for kw in ["engineering technology", "bio systems technology", "information and communication technology", "biosystems"]):
-            mapped_streams.add("Technology")
-            
-        # Information Technology (Often flexible, let's map to PHY and TEC for stubbing)
-        if "information technology" in name_lower and "communication" not in name_lower:
-            mapped_streams.add("Physical Science")
-            mapped_streams.add("Technology")
-            
-        # If no heuristic matched, fallback to a flexible stream or mark for review
-        # For stubbing purposes, we'll assign them to Arts as it is the most flexible, or just Physical/Bio if it sounds sciency
-        if not mapped_streams:
-            if "science" in name_lower:
-                mapped_streams.update(["Physical Science", "Biological Science"])
-            else:
-                mapped_streams.add("Arts")
-                
-        # Create bridge records for all combinations in the mapped streams
-        for stream in mapped_streams:
-            if stream in stream_combinations:
-                for combo_id in stream_combinations[stream]:
-                    bridge_records.append({
-                        "CourseID": course_id,
-                        "combination_id": combo_id
-                    })
-                    
-    bridge_df = pd.DataFrame(bridge_records).drop_duplicates()
+    bio_kws = "medicine|dental|veterinary|biology|zoology|botany|ayurveda|nursing|pharmacy|medical|biomedical"
+    phy_kws = "engineering|physical science|physics|mathematics|computer science|architecture|surveying|quantity surveying"
+    com_kws = "commerce|management|business|accounting|finance|estate management"
+    art_kws = "arts|law|languages|translation|social|teaching|education|design|music|dance|drama"
+    tech_kws = "engineering technology|bio systems technology|information and communication technology|biosystems"
     
-    # Save outputs
+    courses_df['is_bio'] = courses_df['name_lower'].str.contains(bio_kws, regex=True, na=False)
+    
+    phy_base = courses_df['name_lower'].str.contains(phy_kws, regex=True, na=False)
+    tech_exclude = courses_df['name_lower'].str.contains("technology", regex=True, na=False)
+    comp_include = courses_df['name_lower'].str.contains("computer", regex=True, na=False)
+    courses_df['is_phy'] = phy_base & (~tech_exclude | comp_include)
+    
+    courses_df['is_com'] = courses_df['name_lower'].str.contains(com_kws, regex=True, na=False)
+    courses_df['is_art'] = courses_df['name_lower'].str.contains(art_kws, regex=True, na=False)
+    courses_df['is_tech'] = courses_df['name_lower'].str.contains(tech_kws, regex=True, na=False)
+    
+    it_base = courses_df['name_lower'].str.contains("information technology", regex=True, na=False)
+    comm_exclude = courses_df['name_lower'].str.contains("communication", regex=True, na=False)
+    is_it = it_base & ~comm_exclude
+    
+    courses_df.loc[is_it, 'is_phy'] = True
+    courses_df.loc[is_it, 'is_tech'] = True
+    
+    any_mapped = courses_df[['is_bio', 'is_phy', 'is_com', 'is_art', 'is_tech']].any(axis=1)
+    unmapped = ~any_mapped
+    is_science = courses_df['name_lower'].str.contains("science", regex=True, na=False)
+    
+    courses_df.loc[unmapped & is_science, 'is_phy'] = True
+    courses_df.loc[unmapped & is_science, 'is_bio'] = True
+    courses_df.loc[unmapped & ~is_science, 'is_art'] = True
+    
+    stream_map = {
+        'Biological Science': 'is_bio',
+        'Physical Science': 'is_phy',
+        'Commerce': 'is_com',
+        'Arts': 'is_art',
+        'Engineering Technology': 'is_tech',
+        'Bio-systems Technology': 'is_tech'
+    }
+    
+    melted = courses_df.melt(id_vars=['CourseID'], value_vars=list(stream_map.values()), var_name='stream_col', value_name='is_mapped')
+    mapped_streams_df = melted[melted['is_mapped']].copy()
+    
+    inv_stream_map = {v: k for k, v in stream_map.items()}
+    mapped_streams_df['stream'] = mapped_streams_df['stream_col'].map(inv_stream_map)
+    
+    combo_expanded = [{'stream': stream, 'combination_id': cid} for stream, combo_ids in stream_combinations.items() for cid in combo_ids]
+    combo_df = pd.DataFrame(combo_expanded)
+    
+    bridge_df = pd.merge(mapped_streams_df[['CourseID', 'stream']], combo_df, on='stream', how='inner')
+    bridge_df = bridge_df[['CourseID', 'combination_id']].drop_duplicates()
+    
+    # Save outputs (Write-Audit-Publish pattern)
     csv_dir = Path("data/bronze/csv")
     parquet_dir = Path("data/bronze/parquet")
     
     csv_dir.mkdir(parents=True, exist_ok=True)
     parquet_dir.mkdir(parents=True, exist_ok=True)
     
-    bridge_df.to_csv(csv_dir / "bridge_course_combination.csv", index=False, encoding="utf-8-sig")
-    bridge_df.to_parquet(parquet_dir / "bridge_course_combination.parquet", index=False)
+    temp_csv = csv_dir / "bridge_course_combination_tmp.csv"
+    temp_parquet = parquet_dir / "bridge_course_combination_tmp.parquet"
     
-    bridge_df.to_sql("bridge_course_combination", conn, if_exists="replace", index=False)
+    # Write
+    bridge_df.to_csv(temp_csv, index=False, encoding="utf-8-sig")
+    bridge_df.to_parquet(temp_parquet, index=False)
+    
+    # Audit
+    assert len(bridge_df) > 0, "Data Quality Error: No bridge records generated!"
+    assert not bridge_df.isnull().any().any(), "Data Quality Error: Nulls found in bridge records!"
+    
+    # Publish (Atomic swap)
+    temp_csv.replace(csv_dir / "bridge_course_combination.csv")
+    temp_parquet.replace(parquet_dir / "bridge_course_combination.parquet")
+    
+    # DB WAP Publish
+    temp_table = "bridge_course_combination_tmp"
+    final_table = "bridge_course_combination"
+    bridge_df.to_sql(temp_table, conn, if_exists="replace", index=False)
+    
+    conn.execute("BEGIN TRANSACTION")
+    conn.execute(f"DROP TABLE IF EXISTS {final_table}")
+    conn.execute(f"ALTER TABLE {temp_table} RENAME TO {final_table}")
+    conn.commit()
     conn.close()
     
     print(f"bridge_course_combination generated with {len(bridge_df)} records mapping {len(courses_df)} courses.")

@@ -1,36 +1,58 @@
 import pandas as pd
 import sqlite3
+import sys
+import itertools
 from pathlib import Path
 
+# Add project root to path so we can import from src if run directly
+project_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(project_root))
+
+from src.validator.engine import ALL_SUBJECTS, validateCombination
+
 def generate_combinations():
-    combinations = [
-        {"combination_id": "PHY-001", "stream": "Physical Science", "subject_1": "Combined Mathematics", "subject_2": "Physics", "subject_3": "Chemistry"},
-        {"combination_id": "PHY-002", "stream": "Physical Science", "subject_1": "Combined Mathematics", "subject_2": "Physics", "subject_3": "ICT"},
-        {"combination_id": "PHY-003", "stream": "Physical Science", "subject_1": "Combined Mathematics", "subject_2": "Chemistry", "subject_3": "ICT"},
-        {"combination_id": "PHY-004", "stream": "Physical Science", "subject_1": "Combined Mathematics", "subject_2": "Physics", "subject_3": "Agricultural Science"},
-        {"combination_id": "PHY-005", "stream": "Physical Science", "subject_1": "Combined Mathematics", "subject_2": "Physics", "subject_3": "Statistics"},
-        {"combination_id": "PHY-006", "stream": "Physical Science", "subject_1": "Combined Mathematics", "subject_2": "Chemistry", "subject_3": "Biology"},
-        {"combination_id": "BIO-001", "stream": "Biological Science", "subject_1": "Biology", "subject_2": "Chemistry", "subject_3": "Physics"},
-        {"combination_id": "BIO-002", "stream": "Biological Science", "subject_1": "Biology", "subject_2": "Chemistry", "subject_3": "Agricultural Science"},
-        {"combination_id": "BIO-003", "stream": "Biological Science", "subject_1": "Biology", "subject_2": "Chemistry", "subject_3": "ICT"},
-        {"combination_id": "BIO-004", "stream": "Biological Science", "subject_1": "Biology", "subject_2": "Physics", "subject_3": "Agricultural Science"},
-        {"combination_id": "COM-001", "stream": "Commerce", "subject_1": "Accounting", "subject_2": "Business Studies", "subject_3": "Economics"},
-        {"combination_id": "COM-002", "stream": "Commerce", "subject_1": "Accounting", "subject_2": "Business Studies", "subject_3": "ICT"},
-        {"combination_id": "COM-003", "stream": "Commerce", "subject_1": "Accounting", "subject_2": "Economics", "subject_3": "Business Statistics"},
-        {"combination_id": "COM-004", "stream": "Commerce", "subject_1": "Accounting", "subject_2": "Economics", "subject_3": "ICT"},
-        {"combination_id": "COM-005", "stream": "Commerce", "subject_1": "Business Studies", "subject_2": "Economics", "subject_3": "ICT"},
-        {"combination_id": "TEC-001", "stream": "Technology", "subject_1": "Engineering Technology", "subject_2": "Science for Technology", "subject_3": "ICT"},
-        {"combination_id": "TEC-002", "stream": "Technology", "subject_1": "Engineering Technology", "subject_2": "Science for Technology", "subject_3": "Economics"},
-        {"combination_id": "TEC-003", "stream": "Technology", "subject_1": "Engineering Technology", "subject_2": "Science for Technology", "subject_3": "Accounting"},
-        {"combination_id": "TEC-004", "stream": "Technology", "subject_1": "Bio Systems Technology", "subject_2": "Science for Technology", "subject_3": "Agricultural Science"},
-        {"combination_id": "TEC-005", "stream": "Technology", "subject_1": "Bio Systems Technology", "subject_2": "Science for Technology", "subject_3": "ICT"},
-        {"combination_id": "TEC-006", "stream": "Technology", "subject_1": "Bio Systems Technology", "subject_2": "Science for Technology", "subject_3": "Economics"},
-        {"combination_id": "ART-001", "stream": "Arts", "subject_1": "Political Science", "subject_2": "History", "subject_3": "Geography"},
-        {"combination_id": "ART-002", "stream": "Arts", "subject_1": "Economics", "subject_2": "Political Science", "subject_3": "Geography"},
-        {"combination_id": "ART-003", "stream": "Arts", "subject_1": "Logic & Scientific Method", "subject_2": "History", "subject_3": "English Literature"},
-    ]
+    combinations = []
+    stream_counters = {}
     
+    # Generate every mathematically possible 3-subject combination
+    for combo in itertools.combinations(ALL_SUBJECTS, 3):
+        combo_list = list(combo)
+        # Check against UGC rules
+        streams, _, _ = validateCombination(combo_list, with_swaps=False)
+        
+        for stream in streams:
+            if stream not in stream_counters:
+                stream_counters[stream] = 1
+                
+            prefix = stream.split()[0].upper()[:3]
+            if stream == "Engineering Technology": prefix = "ENG"
+            if stream == "Bio-systems Technology": prefix = "BST"
+            
+            combo_id = f"{prefix}-{stream_counters[stream]:03d}"
+            stream_counters[stream] += 1
+            
+            combinations.append({
+                "combination_id": combo_id,
+                "stream": stream,
+                "subject_1": combo_list[0],
+                "subject_2": combo_list[1],
+                "subject_3": combo_list[2]
+            })
+            
     df = pd.DataFrame(combinations)
+    # Sort for deterministic output
+    df = df.sort_values(by=["stream", "subject_1", "subject_2", "subject_3"]).reset_index(drop=True)
+    
+    # Re-assign sequential IDs after sorting
+    df['combination_id'] = df.groupby('stream').cumcount() + 1
+    
+    def format_id(row):
+        prefix = row['stream'].split()[0].upper()[:3]
+        if row['stream'] == "Engineering Technology": prefix = "ENG"
+        if row['stream'] == "Bio-systems Technology": prefix = "BST"
+        return f"{prefix}-{row['combination_id']:03d}"
+        
+    df['combination_id'] = df.apply(format_id, axis=1)
     
     csv_dir = Path("data/bronze/csv")
     parquet_dir = Path("data/bronze/parquet")
@@ -39,11 +61,31 @@ def generate_combinations():
     csv_dir.mkdir(parents=True, exist_ok=True)
     parquet_dir.mkdir(parents=True, exist_ok=True)
     
-    df.to_csv(csv_dir / "dim_combination.csv", index=False, encoding="utf-8-sig")
-    df.to_parquet(parquet_dir / "dim_combination.parquet", index=False)
+    temp_csv = csv_dir / "dim_combination_tmp.csv"
+    temp_parquet = parquet_dir / "dim_combination_tmp.parquet"
     
+    # Write
+    df.to_csv(temp_csv, index=False, encoding="utf-8-sig")
+    df.to_parquet(temp_parquet, index=False)
+    
+    # Audit
+    assert len(df) > 0, "Data Quality Error: No combination records generated!"
+    assert not df.isnull().any().any(), "Data Quality Error: Nulls found in combinations!"
+    
+    # Publish (Atomic swap)
+    temp_csv.replace(csv_dir / "dim_combination.csv")
+    temp_parquet.replace(parquet_dir / "dim_combination.parquet")
+    
+    # DB WAP Publish
     conn = sqlite3.connect(db_path)
-    df.to_sql("dim_combination", conn, if_exists="replace", index=False)
+    temp_table = "dim_combination_tmp"
+    final_table = "dim_combination"
+    df.to_sql(temp_table, conn, if_exists="replace", index=False)
+    
+    conn.execute("BEGIN TRANSACTION")
+    conn.execute(f"DROP TABLE IF EXISTS {final_table}")
+    conn.execute(f"ALTER TABLE {temp_table} RENAME TO {final_table}")
+    conn.commit()
     conn.close()
     
     print("dim_combination generated and saved to csv, parquet, and sqlite.")

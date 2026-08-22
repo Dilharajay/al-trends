@@ -1,0 +1,32 @@
+DEFINE
+    MEASURE 'fact_cutoffs'[Competitiveness Index] = 
+        VAR GlobalMin = 
+            CALCULATE(
+                MIN('fact_cutoffs'[CutoffZ]), 
+                ALL('fact_cutoffs')
+            )
+        VAR GlobalMax = 
+            CALCULATE(
+                MAX('fact_cutoffs'[CutoffZ]), 
+                ALL('fact_cutoffs')
+            )
+        VAR GlobalRange = GlobalMax - GlobalMin
+        VAR CourseMean = AVERAGE('fact_cutoffs'[CutoffZ])
+        VAR CourseStdDev = STDEV.P('fact_cutoffs'[CutoffZ])
+        VAR NormalizedMean = 
+            DIVIDE(CourseMean - GlobalMin, GlobalRange, 0) * 100
+        VAR VolatilityPenalty = 
+            DIVIDE(COALESCE(CourseStdDev, 0), GlobalRange, 0) * 100 * 0.25
+        VAR RawIndex = NormalizedMean - VolatilityPenalty
+        RETURN
+            IF(
+                NOT(ISBLANK(CourseMean)),
+                MAX(0, MIN(100, RawIndex)),
+                BLANK()
+            )
+
+EVALUATE
+SUMMARIZECOLUMNS(
+    'fact_cutoffs'[CourseName],
+    "Competitiveness Index", [Competitiveness Index]
+)

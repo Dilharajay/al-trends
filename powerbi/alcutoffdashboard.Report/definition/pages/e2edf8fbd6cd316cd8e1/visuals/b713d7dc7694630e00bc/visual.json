@@ -1,0 +1,121 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "b713d7dc7694630e00bc",
+  "position": {
+    "x": 263.32247557003257,
+    "y": 402.21498371335508,
+    "z": 6000,
+    "height": 317.785016286645,
+    "width": 1016.6775244299674,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_university"
+                    }
+                  },
+                  "Property": "UniversityName"
+                }
+              },
+              "queryRef": "dim_university.UniversityName",
+              "nativeQueryRef": "UniversityName",
+              "active": true
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_cutoffs"
+                    }
+                  },
+                  "Property": "Average Cutoff Z"
+                }
+              },
+              "queryRef": "fact_cutoffs.Average Cutoff Z",
+              "nativeQueryRef": "Average Cutoff Z"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_cutoffs"
+                    }
+                  },
+                  "Property": "highest zscore"
+                }
+              },
+              "queryRef": "fact_cutoffs.highest zscore",
+              "nativeQueryRef": "highest zscore"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_cutoffs"
+                  }
+                },
+                "Property": "highest zscore"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryAxis": [
+        {
+          "properties": {
+            "outerPadding": {
+              "expr": {
+                "Literal": {
+                  "Value": "73L"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

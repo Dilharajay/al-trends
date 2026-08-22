@@ -1,0 +1,71 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "121fbcba136f24c7ff2e",
+  "position": {
+    "x": 703.58306188925087,
+    "y": 16.416938110749186,
+    "z": 1000,
+    "height": 120.66409308101396,
+    "width": 187.83791809518667,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_cutoffs"
+                    }
+                  },
+                  "Property": "Average Cutoff Z"
+                }
+              },
+              "queryRef": "fact_cutoffs.Average Cutoff Z",
+              "nativeQueryRef": "Average Cutoff Z"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_cutoffs"
+                  }
+                },
+                "Property": "Average Cutoff Z"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "layout": [
+        {
+          "properties": {
+            "columnCount": {
+              "expr": {
+                "Literal": {
+                  "Value": "3L"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

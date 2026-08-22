@@ -18,3 +18,7 @@ relationship bridge_course_combination_dim_combination
 	fromColumn: bridge_course_combination.combination_id
 	toColumn: dim_combination.combination_id
 
+relationship AutoDetected_15649d3c-2987-428d-8505-25e6f5d8a497
+	fromColumn: fact_cutoffs.YearID
+	toColumn: dim_year.YearID
+

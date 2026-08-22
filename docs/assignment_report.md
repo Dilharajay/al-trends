@@ -37,23 +37,7 @@ Extracting tabular data from the UGC PDFs required a custom ETL pipeline written
 
 ## 5. Screenshots of the Power BI Dashboard
 
-*(Note for submission: Insert your actual screenshots below.)*
 
-* **Figure 1: National Overview**  
-  *[Insert Screenshot]*  
-  *Caption: Shows national KPIs, total seat capacities, and ranks the most competitive courses.*
-
-* **Figure 2: Historical Trends**  
-  *[Insert Screenshot]*  
-  *Caption: Tracks Z-score changes for a selected course across different universities over the last eight years.*
-
-* **Figure 3: District Disparity**  
-  *[Insert Screenshot]*  
-  *Caption: Box plots showing how minimum Z-scores vary across the 25 administrative districts for high-demand fields.*
-
-* **Figure 4: Student Eligibility Analyzer**  
-  *[Insert Screenshot]*  
-  *Caption: An interactive tool where a student inputs their Z-score to see which courses and universities historically match their results.*
 
 ## 6. Key Findings and Insights
 

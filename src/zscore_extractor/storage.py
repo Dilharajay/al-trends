@@ -45,15 +45,10 @@ def write_tables_to_sqlite(
             PublicationDate TEXT
         );
         CREATE TABLE IF NOT EXISTS fact_cutoffs (
-            AcademicYear TEXT,
-            ExamYear INTEGER,
-            PublicationDate TEXT,
+            YearID TEXT,
             CourseID TEXT,
-            CourseName TEXT,
             UniversityID TEXT,
-            UniversityName TEXT,
             DistrictID TEXT,
-            DistrictName TEXT,
             CutoffZ REAL,
             CutoffStatus TEXT,
             AptitudeTest BOOLEAN,

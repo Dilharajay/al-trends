@@ -19,80 +19,113 @@ table fact_cutoffs
 			)
 		lineageTag: b709bfb6-27a2-4972-86ef-5d005f147756
 
-	column AcademicYear
-		dataType: string
-		lineageTag: 8518ef08-6713-4a0a-8fda-18e76796d5af
-		sourceColumn: AcademicYear
+	measure 'highest zscore' = MAX(fact_cutoffs[CutoffZ])
+		lineageTag: 704da107-6e6a-4737-9bc0-53e2c4231db1
 
-	column ExamYear
-		dataType: int64
-		lineageTag: f3d95e3d-e0e1-4e26-acef-cb2c82eac9e0
-		sourceColumn: ExamYear
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	column PublicationDate
-		dataType: string
-		lineageTag: bc9576ae-adaf-47a5-851a-eabe179a1097
-		sourceColumn: PublicationDate
+	measure 'Competitiveness Index' = ```
+			
+			        VAR GlobalMin = 
+			            CALCULATE(
+			                MIN('fact_cutoffs'[CutoffZ]), 
+			                ALL('fact_cutoffs')
+			            )
+			        VAR GlobalMax = 
+			            CALCULATE(
+			                MAX('fact_cutoffs'[CutoffZ]), 
+			                ALL('fact_cutoffs')
+			            )
+			        VAR GlobalRange = GlobalMax - GlobalMin
+			        VAR CourseMean = AVERAGE('fact_cutoffs'[CutoffZ])
+			        VAR CourseStdDev = STDEV.P('fact_cutoffs'[CutoffZ])
+			        VAR NormalizedMean = 
+			            DIVIDE(CourseMean - GlobalMin, GlobalRange, 0) * 100
+			        VAR VolatilityPenalty = 
+			            DIVIDE(COALESCE(CourseStdDev, 0), GlobalRange, 0) * 100 * 0.25
+			        VAR RawIndex = NormalizedMean - VolatilityPenalty
+			        RETURN
+			            IF(
+			                NOT(ISBLANK(CourseMean)),
+			                MAX(0, MIN(100, RawIndex)),
+			                BLANK()
+			            )
+			```
+		lineageTag: 1e583706-7ff9-42b4-ab96-a69de372f881
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	column CourseID
 		dataType: string
 		lineageTag: 783b3ecb-10be-4ca6-bebe-1812ba281f85
+		summarizeBy: none
 		sourceColumn: CourseID
 
-	column CourseName
-		dataType: string
-		lineageTag: cc6dadfc-0c4a-4cc6-9cf3-105e2c9ef2bd
-		sourceColumn: CourseName
+		annotation SummarizationSetBy = Automatic
 
 	column UniversityID
 		dataType: string
 		lineageTag: c9848fa7-ad14-4b22-9151-71572dee21b8
+		summarizeBy: none
 		sourceColumn: UniversityID
 
-	column UniversityName
-		dataType: string
-		lineageTag: a8176103-0e53-4d81-b796-27a96af945b6
-		sourceColumn: UniversityName
+		annotation SummarizationSetBy = Automatic
 
 	column DistrictID
 		dataType: string
 		lineageTag: 0df747dd-0921-4b1d-b53b-2caf25e63d73
+		summarizeBy: none
 		sourceColumn: DistrictID
 
-	column DistrictName
-		dataType: string
-		lineageTag: eea47287-24cc-4579-bc5d-e8041879185d
-		sourceColumn: DistrictName
+		annotation SummarizationSetBy = Automatic
 
 	column CutoffZ
 		dataType: double
 		lineageTag: df8c671b-1c0f-4f56-87b5-6d5fb70ba350
+		summarizeBy: sum
 		sourceColumn: CutoffZ
+
+		annotation SummarizationSetBy = Automatic
 
 	column CutoffStatus
 		dataType: string
 		lineageTag: 878f500a-1436-4a12-bd34-ca7a8045b5b9
+		summarizeBy: none
 		sourceColumn: CutoffStatus
 
-	column AllIslandMerit
-		dataType: boolean
-		lineageTag: b82a03cd-cee8-480c-a13a-c552f0673327
-		sourceColumn: AllIslandMerit
+		annotation SummarizationSetBy = Automatic
 
 	column AptitudeTest
 		dataType: boolean
 		lineageTag: 19350ea8-5769-4e6f-80b0-32735484c9aa
+		summarizeBy: none
 		sourceColumn: AptitudeTest
+
+		annotation SummarizationSetBy = Automatic
 
 	column Page
 		dataType: int64
 		lineageTag: 05afa9e6-929c-4fae-89e6-03e0f3b36da5
+		summarizeBy: sum
 		sourceColumn: Page
+
+		annotation SummarizationSetBy = Automatic
 
 	column SourceFile
 		dataType: string
 		lineageTag: 5b2a4307-fed3-4af4-a663-787bdcd6a20e
+		summarizeBy: none
 		sourceColumn: SourceFile
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearID
+		dataType: string
+		lineageTag: ba2e423b-fc98-4dd3-ab7f-2e9d03464f8a
+		summarizeBy: none
+		sourceColumn: YearID
+
+		annotation SummarizationSetBy = Automatic
 
 	partition fact_cutoffs = m
 		mode: import

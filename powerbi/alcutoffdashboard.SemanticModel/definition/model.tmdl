@@ -9,7 +9,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_ProTooling = ["MCP-PBIModeling","DevMode"]
+annotation PBI_ProTooling = ["MCP-PBIModeling","DevMode","DaxQueryView_Desktop"]
 
 annotation PBI_QueryOrder = ["bridge_course_combination","dim_combination","dim_course","dim_district","dim_university","dim_year","fact_cutoffs"]
 

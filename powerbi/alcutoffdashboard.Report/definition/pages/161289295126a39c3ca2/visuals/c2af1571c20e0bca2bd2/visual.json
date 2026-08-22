@@ -1,0 +1,121 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "c2af1571c20e0bca2bd2",
+  "position": {
+    "x": 263.84364820846906,
+    "y": 402.21498371335508,
+    "z": 6000,
+    "height": 317.785016286645,
+    "width": 1016.6775244299674,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_course"
+                    }
+                  },
+                  "Property": "CourseName"
+                }
+              },
+              "queryRef": "dim_course.CourseName",
+              "nativeQueryRef": "CourseName",
+              "active": true
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_cutoffs"
+                    }
+                  },
+                  "Property": "Average Cutoff Z"
+                }
+              },
+              "queryRef": "fact_cutoffs.Average Cutoff Z",
+              "nativeQueryRef": "Average Cutoff Z"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_cutoffs"
+                    }
+                  },
+                  "Property": "Competitiveness Index"
+                }
+              },
+              "queryRef": "fact_cutoffs.Competitiveness Index",
+              "nativeQueryRef": "Competitiveness Index"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_cutoffs"
+                  }
+                },
+                "Property": "Competitiveness Index"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryAxis": [
+        {
+          "properties": {
+            "outerPadding": {
+              "expr": {
+                "Literal": {
+                  "Value": "73L"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,19 +1,19 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "ba8dce756f1e28297b66",
   "position": {
-    "x": 962.82482520314227,
-    "y": 8.7077180573927588,
+    "x": 1080,
+    "y": 32.5,
     "z": 3000,
-    "height": 120.66409308101396,
-    "width": 162.95872364549308,
+    "height": 88.75,
+    "width": 162.5,
     "tabOrder": 3000
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "gauge",
     "query": {
       "queryState": {
-        "Data": {
+        "Y": {
           "projections": [
             {
               "field": {
@@ -23,11 +23,11 @@
                       "Entity": "fact_cutoffs"
                     }
                   },
-                  "Property": "NQC Count"
+                  "Property": "highest zscore"
                 }
               },
-              "queryRef": "fact_cutoffs.NQC Count",
-              "nativeQueryRef": "NQC Count"
+              "queryRef": "fact_cutoffs.highest zscore",
+              "nativeQueryRef": "highest zscore"
             }
           ]
         }
@@ -42,7 +42,7 @@
                     "Entity": "fact_cutoffs"
                   }
                 },
-                "Property": "NQC Count"
+                "Property": "highest zscore"
               }
             },
             "direction": "Descending"
@@ -50,6 +50,82 @@
         ],
         "isDefaultSort": true
       }
+    },
+    "objects": {
+      "axis": [
+        {
+          "properties": {
+            "max": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            },
+            "min": {
+              "expr": {
+                "Literal": {
+                  "Value": "-4D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "target": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "calloutValue": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'center'"
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "drillFilterOtherVisuals": true
   }

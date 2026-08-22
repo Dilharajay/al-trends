@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "ea204a9013de14d09bcc",
+  "position": {
+    "x": 59.710066679264635,
+    "y": 235.10838754960452,
+    "z": 10000,
+    "height": 468.97281537672433,
+    "width": 644.37113624706421,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "BoxandWhiskerByMAQ1823AD39DT234AB532063E128AX",
+    "query": {
+      "queryState": {
+        "category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_cutoffs"
+                    }
+                  },
+                  "Property": "DistrictID"
+                }
+              },
+              "queryRef": "fact_cutoffs.DistrictID",
+              "nativeQueryRef": "DistrictID"
+            }
+          ]
+        },
+        "categoryGroup": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_course"
+                    }
+                  },
+                  "Property": "CourseName"
+                }
+              },
+              "queryRef": "dim_course.CourseName",
+              "nativeQueryRef": "CourseName",
+              "active": true
+            }
+          ]
+        },
+        "measure": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_cutoffs"
+                        }
+                      },
+                      "Property": "CutoffZ"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(fact_cutoffs.CutoffZ)",
+              "nativeQueryRef": "Sum of CutoffZ"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "parentAxis": [
+        {
+          "properties": {
+            "split": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,12 +1,12 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "5aba9cbb09c9ee2fac70",
   "position": {
-    "x": 9.95167777987744,
-    "y": 8.7077180573927588,
+    "x": 58.75,
+    "y": 32.5,
     "z": 0,
-    "height": 108.22449585616715,
-    "width": 544.85435844828976,
+    "height": 96.25,
+    "width": 631.25,
     "tabOrder": 0
   },
   "visual": {
@@ -19,13 +19,21 @@
               {
                 "textRuns": [
                   {
-                    "value": "UNIVERSITY ADMISSION Z- SCORE CUTOFFS DASHBOARD",
+                    "value": "Sri Lankan University Entrance Z-Score Cutoff Trends",
                     "textStyle": {
                       "fontWeight": "bold",
                       "fontSize": "24pt"
                     }
                   }
                 ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": ""
+                  }
+                ],
+                "horizontalTextAlignment": "center"
               }
             ]
           }

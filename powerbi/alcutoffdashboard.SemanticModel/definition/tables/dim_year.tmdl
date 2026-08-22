@@ -4,22 +4,34 @@ table dim_year
 	column YearID
 		dataType: string
 		lineageTag: 1b300296-0b5b-42d2-92a9-827c419e4b20
+		summarizeBy: none
 		sourceColumn: YearID
+
+		annotation SummarizationSetBy = Automatic
 
 	column AcademicYear
 		dataType: string
 		lineageTag: 9847ab7a-71f0-4398-afe7-ac5adcf90efd
+		summarizeBy: none
 		sourceColumn: AcademicYear
+
+		annotation SummarizationSetBy = Automatic
 
 	column ExamYear
 		dataType: int64
 		lineageTag: 994cb81e-3b6e-4c65-bdaf-1d1babd734a7
+		summarizeBy: none
 		sourceColumn: ExamYear
+
+		annotation SummarizationSetBy = Automatic
 
 	column PublicationDate
 		dataType: string
 		lineageTag: 76a587a6-3154-4d33-872b-7d8eff92fdbb
+		summarizeBy: none
 		sourceColumn: PublicationDate
+
+		annotation SummarizationSetBy = Automatic
 
 	partition dim_year = m
 		mode: import

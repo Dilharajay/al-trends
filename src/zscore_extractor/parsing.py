@@ -388,33 +388,37 @@ def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tup
 
                     fact_rows.append(
                         {
-                            "AcademicYear": academic_year,
-                            "ExamYear": exam_year,
-                            "PublicationDate": publication_date,
+                            "YearID": year_id,
                             "CourseID": make_id("COURSE", course_name),
-                            "CourseName": course_name,
                             "UniversityID": make_id("UNIVERSITY", university_name),
-                            "UniversityName": university_name,
                             "DistrictID": district_id,
-                            "DistrictName": district_name,
                             "CutoffZ": cutoff_z,
                             "CutoffStatus": cutoff_status,
                             "AptitudeTest": header["AptitudeTest"],
                             "Page": page_number,
                             "SourceFile": pdf_path.name,
+                            # Keep these temporarily to build dims later in the function, but drop them from final fact
+                            "_CourseName": course_name,
+                            "_UniversityName": university_name,
+                            "_DistrictName": district_name,
+                            "_AcademicYear": academic_year,
+                            "_ExamYear": exam_year,
+                            "_PublicationDate": publication_date,
                         }
                     )
 
     fact = pd.DataFrame(fact_rows)
 
     course_dim = (
-        fact[["CourseID", "CourseName"]]
+        fact[["CourseID", "_CourseName"]]
+        .rename(columns={"_CourseName": "CourseName"})
         .drop_duplicates()
         .sort_values("CourseName")
         .reset_index(drop=True)
     )
     university_dim = (
-        fact[["UniversityID", "UniversityName"]]
+        fact[["UniversityID", "_UniversityName"]]
+        .rename(columns={"_UniversityName": "UniversityName"})
         .drop_duplicates()
         .sort_values("UniversityName")
         .reset_index(drop=True)
@@ -437,16 +441,17 @@ def extract_pdf(pdf_path: Path, output_dir: Path, write_csv: bool = True) -> tup
     )
 
     fact_columns = [
-        "AcademicYear", "ExamYear", "PublicationDate",
-        "CourseID", "CourseName",
-        "UniversityID", "UniversityName",
-        "DistrictID", "DistrictName",
+        "YearID",
+        "CourseID",
+        "UniversityID",
+        "DistrictID",
         "CutoffZ", "CutoffStatus",
         "AptitudeTest",
         "Page", "SourceFile",
     ]
-    fact = fact[fact_columns]
-    fact = fact.sort_values(["CourseName", "UniversityName", "DistrictName"]).reset_index(drop=True)
+    # Sort using the temporary columns before dropping them
+    fact = fact.sort_values(["_CourseName", "_UniversityName", "_DistrictName"])
+    fact = fact[fact_columns].reset_index(drop=True)
 
     if write_csv:
         fact.to_csv(output_dir / "fact_cutoffs.csv", index=False, encoding="utf-8-sig")
