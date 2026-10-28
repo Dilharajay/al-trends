@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "2369e04fb8258d200979",
   "position": {
-    "x": 60.97719869706841,
-    "y": 333.02931596091207,
-    "z": 5000,
-    "height": 71.530944625407173,
-    "width": 181.75895765472313,
-    "tabOrder": 5000
+    "x": 61.428571428571431,
+    "y": 332.85714285714289,
+    "z": 1000,
+    "height": 71.428571428571431,
+    "width": 260,
+    "tabOrder": 1000
   },
   "visual": {
     "visualType": "slicer",
@@ -27,8 +27,9 @@
                 }
               },
               "queryRef": "dim_district.DistrictName",
-              "nativeQueryRef": "DistrictName",
-              "active": true
+              "nativeQueryRef": "District Name",
+              "active": true,
+              "displayName": "District Name"
             }
           ]
         }
@@ -70,7 +71,49 @@
       ],
       "general": [
         {
-          "properties": {}
+          "properties": {
+            "filter": {
+              "filter": {
+                "Version": 2,
+                "From": [
+                  {
+                    "Name": "d",
+                    "Entity": "dim_district",
+                    "Type": 0
+                  }
+                ],
+                "Where": [
+                  {
+                    "Condition": {
+                      "In": {
+                        "Expressions": [
+                          {
+                            "Column": {
+                              "Expression": {
+                                "SourceRef": {
+                                  "Source": "d"
+                                }
+                              },
+                              "Property": "DistrictName"
+                            }
+                          }
+                        ],
+                        "Values": [
+                          [
+                            {
+                              "Literal": {
+                                "Value": "'COLOMBO'"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
         }
       ]
     },

@@ -4,10 +4,10 @@
   "position": {
     "x": 441.60570148206136,
     "y": 129.37181113840671,
-    "z": 4000,
+    "z": 1000,
     "height": 76.221498371335514,
     "width": 180.58631921824104,
-    "tabOrder": 4000
+    "tabOrder": 1000
   },
   "visual": {
     "visualType": "slicer",
@@ -27,8 +27,9 @@
                 }
               },
               "queryRef": "dim_course.CourseName",
-              "nativeQueryRef": "CourseName",
-              "active": true
+              "nativeQueryRef": "Course Name",
+              "active": true,
+              "displayName": "Course Name"
             }
           ]
         }

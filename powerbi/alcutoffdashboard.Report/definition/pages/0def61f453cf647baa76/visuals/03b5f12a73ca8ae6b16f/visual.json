@@ -4,10 +4,10 @@
   "position": {
     "x": 651.83489458197232,
     "y": 129.37181113840671,
-    "z": 6000,
+    "z": 3000,
     "height": 71.530944625407173,
     "width": 181.75895765472313,
-    "tabOrder": 6000
+    "tabOrder": 3000
   },
   "visual": {
     "visualType": "slicer",
@@ -27,8 +27,9 @@
                 }
               },
               "queryRef": "dim_district.DistrictName",
-              "nativeQueryRef": "DistrictName",
-              "active": true
+              "nativeQueryRef": "District Name",
+              "active": true,
+              "displayName": "District Name"
             }
           ]
         }

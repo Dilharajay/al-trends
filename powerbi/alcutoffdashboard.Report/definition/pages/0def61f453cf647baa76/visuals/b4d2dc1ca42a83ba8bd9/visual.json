@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "b4d2dc1ca42a83ba8bd9",
   "position": {
-    "x": 742.64395432335391,
-    "y": 235.10838754960452,
-    "z": 5000,
-    "height": 468.97281537672433,
-    "width": 537.39060011338177,
-    "tabOrder": 5000
+    "x": 676.07722007722009,
+    "y": 235.58407668752497,
+    "z": 2000,
+    "height": 468.71415257622152,
+    "width": 548.46917853814409,
+    "tabOrder": 2000
   },
   "visual": {
     "visualType": "barChart",
@@ -101,15 +101,7 @@
     "objects": {
       "labels": [
         {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            }
-          }
+          "properties": {}
         }
       ],
       "categoryAxis": [
@@ -119,6 +111,32 @@
               "expr": {
                 "Literal": {
                   "Value": "73L"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "ribbonBands": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "zoom": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }
@@ -134,6 +152,19 @@
               "expr": {
                 "Literal": {
                   "Value": "'Average z score vs Cource'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "stylePreset": [
+        {
+          "properties": {
+            "name": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Data labels'"
                 }
               }
             }

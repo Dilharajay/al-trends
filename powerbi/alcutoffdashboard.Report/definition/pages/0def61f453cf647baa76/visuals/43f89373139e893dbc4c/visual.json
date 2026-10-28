@@ -4,10 +4,10 @@
   "position": {
     "x": 241.32818616202792,
     "y": 129.37181113840671,
-    "z": 9000,
+    "z": 6000,
     "height": 71.530944625407173,
     "width": 181.75895765472313,
-    "tabOrder": 9000
+    "tabOrder": 6000
   },
   "visual": {
     "visualType": "slicer",
@@ -27,8 +27,9 @@
                 }
               },
               "queryRef": "dim_university.UniversityName",
-              "nativeQueryRef": "UniversityName",
-              "active": true
+              "nativeQueryRef": "University Name",
+              "active": true,
+              "displayName": "University Name"
             }
           ]
         }

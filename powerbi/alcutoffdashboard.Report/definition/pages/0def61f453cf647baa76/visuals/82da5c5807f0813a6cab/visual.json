@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "82da5c5807f0813a6cab",
   "position": {
-    "x": 59.804560260586321,
-    "y": 138.371335504886,
-    "z": 8000,
-    "height": 76.221498371335514,
-    "width": 180.58631921824104,
-    "tabOrder": 8000
+    "x": 58.466106956779953,
+    "y": 128.12785141592204,
+    "z": 5000,
+    "height": 75.881543071565474,
+    "width": 180.37415976027859,
+    "tabOrder": 5000
   },
   "visual": {
     "visualType": "slicer",
@@ -27,8 +27,9 @@
                 }
               },
               "queryRef": "dim_year.AcademicYear",
-              "nativeQueryRef": "AcademicYear",
-              "active": true
+              "nativeQueryRef": "Academic Year",
+              "active": true,
+              "displayName": "Academic Year"
             }
           ]
         }

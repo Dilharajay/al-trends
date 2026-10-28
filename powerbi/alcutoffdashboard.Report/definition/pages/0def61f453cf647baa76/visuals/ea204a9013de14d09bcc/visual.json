@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "ea204a9013de14d09bcc",
   "position": {
-    "x": 59.710066679264635,
-    "y": 235.10838754960452,
-    "z": 10000,
-    "height": 468.97281537672433,
-    "width": 644.37113624706421,
-    "tabOrder": 10000
+    "x": 60.123019571295437,
+    "y": 235.58407668752497,
+    "z": 7000,
+    "height": 468.71415257622152,
+    "width": 593.86819331646916,
+    "tabOrder": 7000
   },
   "visual": {
     "visualType": "BoxandWhiskerByMAQ1823AD39DT234AB532063E128AX",
@@ -65,11 +65,11 @@
                       "Property": "CutoffZ"
                     }
                   },
-                  "Function": 0
+                  "Function": 1
                 }
               },
               "queryRef": "Sum(fact_cutoffs.CutoffZ)",
-              "nativeQueryRef": "Sum of CutoffZ"
+              "nativeQueryRef": "Average of CutoffZ"
             }
           ]
         }
@@ -83,6 +83,111 @@
         {
           "properties": {
             "split": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "flip": [
+        {
+          "properties": {
+            "orient": {
+              "expr": {
+                "Literal": {
+                  "Value": "'vertical'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "xAxis": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "yAxis": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "backgroundBanding": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "tickMarks": [
+        {
+          "properties": {
+            "showAxisTicks": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "showCategoryTicks": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "gridLines": [
+        {
+          "properties": {
+            "showAxisGridLines": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "thickness": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "RangeSelector": [
+        {
+          "properties": {
+            "show": {
               "expr": {
                 "Literal": {
                   "Value": "true"

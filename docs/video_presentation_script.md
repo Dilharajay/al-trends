@@ -8,7 +8,7 @@
 
 **[Camera: Full face visible, looking directly at the lens]**
 
-Hello everyone. My name is [Your Name], and my registration number is [Your Registration Number]. Today, I'm going to walk you through my Power BI project analyzing Sri Lanka's G.C.E. Advanced Level university admission cutoffs. 
+Hello everyone. i'm dilhara, here, I'm going to walk you through my Power BI project analyzing Sri Lanka's G.C.E. Advanced Level university admission cutoffs. 
 
 If you grew up in Sri Lanka, you already know how stressful university admissions can be. The University Grants Commission, or UGC, uses a combination of Z-scores and a district quota system to allocate seats. 
 
@@ -32,19 +32,27 @@ After cleaning, I structured the data into a Kimball Star Schema. The fact table
 
 **[Screen Recording: Open the Power BI Dashboard to Page 1]**
 
+![Dashboard Page 1: National Overview](./page01.png)
+
 Let's look at the dashboard. 
 
 On this first page, the National Overview, we have the high-level KPIs at the top showing available courses and total intake. Below that, this horizontal bar chart ranks the top 10 most competitive courses in the country based on a custom DAX measure I built. 
 
 **[Screen Recording: Click on Page 2 (Course & University Deep Dive)]**
 
+![Dashboard Page 2: Course & University Deep Dive](./page02.png)
+
 Moving to the second page, we can dive into specific courses. If I select "Medicine" from the slicer here, the line chart instantly updates to show how the Z-score requirement has shifted over the last eight years across different universities. You can see the exact intake capacity for Medicine at the University of Colombo versus Peradeniya right next to it. 
 
 **[Screen Recording: Click on Page 3 (District Disparities)]**
 
+![Dashboard Page 3: District Disparities](./page03.png)
+
 Page three is where we see the impact of the district quotas. This box plot shows the spread of minimum Z-scores across all 25 districts for high-demand fields. Notice how wide the gap is. If you hover over Colombo, you see the threshold is significantly higher than rural districts like Nuwara Eliya. This visually proves how tight the bottleneck is for urban candidates.
 
 **[Screen Recording: Click on Page 4 (Student Eligibility Analyzer)]**
+
+![Dashboard Page 4: Student Eligibility Analyzer](./page4.png)
 
 Finally, page four is the Student Eligibility Analyzer. I built a "What-If" parameter in Power BI that lets a student input their expected Z-score using this slider. 
 

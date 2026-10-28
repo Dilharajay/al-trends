@@ -34,6 +34,7 @@ Extracting tabular data from the UGC PDFs required a custom ETL pipeline written
 * **Handling NQC:** Many cells contain "NQC" (Not Qualified for Course). I kept this as a distinct text status rather than converting it to zero. Converting it to zero would have ruined the mathematical averages when calculating Z-score trends later.
 * **Data Modeling:** I structured the clean data into a Star Schema with fact tables for cutoffs and intakes, and dimension tables for courses, universities, districts, and years.
 * **Power BI Integration:** The database was exported to SQLite and Parquet formats. I then built a Power BI Semantic Model using DAX to calculate custom metrics, like the standard deviation of cutoffs over time.
+* **Predictive Modeling & Web Deployment:** I developed a `RandomForestRegressor` with a time-based validation split (preventing temporal data leakage, achieving an $R^2 = 0.8364$). The model is served through a rate-limited FastAPI REST API and an interactive, deployable web portal that allows prospective students to simulate admission cutoffs and validate UGC subject combinations in real time.
 
 ## 5. Screenshots of the Power BI Dashboard
 
