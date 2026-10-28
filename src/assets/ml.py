@@ -1,5 +1,6 @@
 import os
 import pickle
+import joblib
 import pandas as pd
 from dagster import asset, get_dagster_logger
 from sklearn.preprocessing import OrdinalEncoder
@@ -57,5 +58,4 @@ def rf_model(engineered_features: pd.DataFrame) -> None:
     logger.info(f"Model trained. Validation (Year {latest_year}) MAE: {mae:.4f}, RMSE: {rmse:.4f}")
     
     os.makedirs("models", exist_ok=True)
-    with open("models/rf_model.pkl", "wb") as f:
-        pickle.dump(model, f)
+    joblib.dump(model, "models/rf_model.pkl", compress=6)
