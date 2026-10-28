@@ -1,0 +1,41 @@
+# Version control
+.git/
+.gitignore
+
+# Python caches, tests, and virtual environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Dagster temporary state
+.tmp_dagster*
+dagster_home/
+
+# Frontend local dependencies and build cache
+frontend/node_modules/
+frontend/dist/
+
+# Development notebooks and documentation
+notebooks/
+docs/
+.agents/
+
+# Power BI local model files
+powerbi/
+.tmdl/
+
+# Raw PDF documents and auxiliary flat files (only bronze DB is required in container)
+data/raw/
+data/bronze/csv/
+data/bronze/parquet/
+
+# Secrets and local environments
+.env
+.env.local
+*.log

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: al-trends-ai
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_NAME
+        value: "Sri Lanka A/L Cutoff AI"
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: RATE_LIMIT_DEFAULT
+        value: 100/minute
+      - key: RATE_LIMIT_PREDICT
+        value: 30/minute
+      - key: RATE_LIMIT_BATCH
+        value: 10/minute
+      - key: RATE_LIMIT_STUDENT
+        value: 20/minute

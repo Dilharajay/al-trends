@@ -18,50 +18,85 @@ All data artifacts are written using a **Write-Audit-Publish (WAP)** pattern to 
 ```text
 al-trends/
 ├── src/
-│   ├── assets/              # Dagster Software-Defined Assets
-│   │   ├── core.py          # Extraction and dimension tables
-│   │   └── ml.py            # Feature engineering and model training
-│   ├── validator/           # UGC Rules Engine
-│   │   └── engine.py        # Stream validation logic and swap generation
-│   ├── zscore_extractor/    # PDF Parsing engine
+│   ├── api/                 # Production FastAPI REST API
+│   │   ├── main.py          # API entrypoint, CORS, slowapi rate-limiting & static app mount
+│   │   ├── schemas.py       # Pydantic v2 data contracts
+│   │   └── service.py       # In-memory cached model inference & student evaluation
+│   ├── web/                 # Modern, zero-build deployable Web Frontend (HTML5/Tailwind/Chart.js)
+│   │   ├── index.html       # Single Page Application
+│   │   ├── app.js           # Client-side API integration, telemetry & Chart.js rendering
+│   │   └── style.css        # Custom styles and status badges
+│   ├── assets/              # Dagster Software-Defined Assets (SDA)
+│   │   ├── core.py          # Bronze extraction, combinations, and star schema denormalization
+│   │   └── ml.py            # Feature engineering and temporal-split Random Forest training
+│   ├── validator/           # UGC Declarative Rules Engine
+│   │   └── engine.py        # Stream validation logic and automatic single-subject swaps
+│   ├── zscore_extractor/    # Multi-year PDF parsing engine
 │   ├── generate_combinations.py # Dynamically generates dim_combination using the validator
-│   ├── generate_bridge.py   # Vectorized course mapping
+│   ├── generate_bridge.py   # Vectorized course-to-combination mapping
+│   ├── dashboard.py         # Direct-database Streamlit analytics app
+│   ├── api_dashboard.py     # API-powered Streamlit dashboard
 │   └── definitions.py       # Dagster definitions entrypoint
 ├── notebooks/               
-│   └── data_quality_investigation.ipynb # Interactive EDA and DQ validation
+│   ├── 01_exploratory_data_analysis.ipynb # Historical cutoff distributions & trends
+│   ├── 02_data_quality_investigation.ipynb # Extraction robustness & NQC cell verification
+│   └── 03_machine_learning_pipeline.ipynb # End-to-end ML training, diagnostics & inference
 ├── tests/
-│   └── test_validator.py    # Unit tests for the UGC stream engine
-├── data/                    # Raw PDFs and Bronze extracted data
-└── models/                  # Pickled ML models and encoders
+│   ├── test_api.py          # Unit tests for FastAPI endpoints, rate-limiter, and static mount
+│   └── test_validator.py    # Unit tests for the UGC stream combination engine
+├── data/                    # Raw PDFs and bronze SQLite/Parquet/CSV star schema tables
+├── models/                  # Pickled ML models (rf_model.pkl) and encoders (encoders.pkl)
+└── docs/                    # Academic report, data dictionary, layout guide, presentation script
 ```
 
 ## Quick Start
 
 ### 1. Install Dependencies
-This project uses `uv` for lightning-fast dependency management:
+This project uses `uv` for fast dependency management:
 ```bash
 uv sync
 ```
 
-### 2. Run the End-to-End Pipeline
-Materialize all Dagster assets (extraction, bridging, combinations, data quality checks, and ML training) directly from the command line:
+### 2. Run the End-to-End Dagster Pipeline
+Materialize all Dagster assets (extraction, bridging, combinations, data quality checks, and ML training):
 ```bash
 uv run dagster asset materialize --select "*" -f src/definitions.py
 ```
-Or start the Dagster UI to visualize the dependency graph and trigger the pipeline interactively:
+Or start the Dagster UI to inspect asset lineage:
 ```bash
 uv run dagster dev -f src/definitions.py
 ```
 
-### 3. Run Unit Tests
-To verify the UGC combination rule engine against complex edge cases (e.g., disallowed pairs, barred technology subjects):
+### 3. Run Automated Tests
+Execute the full test suite (15 unit tests covering the API, rate limiter, static frontend, and UGC validator):
 ```bash
-uv run pytest tests/test_validator.py
+uv run pytest tests/
 ```
 
-### 4. Interactive Data Quality Analysis
-Explore the extraction robustness and view the distribution of legitimately missing `NQC` (Not Qualified for Course) cells:
-Open `notebooks/data_quality_investigation.ipynb` in Jupyter or VS Code.
+### 4. Launch the Web Application & REST API
+A single command launches the production FastAPI server, which hosts **both** the interactive REST API and the web frontend:
+```bash
+uv run uvicorn src.api.main:app --reload --port 8000
+```
+Once started, access:
+- 🌐 **Web Frontend (No Streamlit required)**: [http://127.0.0.1:8000/app/](http://127.0.0.1:8000/app/) (or simply [http://127.0.0.1:8000/](http://127.0.0.1:8000/))
+- 📄 **Interactive Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- 📚 **ReDoc Documentation**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+
+### 5. (Optional) Run Streamlit Dashboards
+If preferred, launch the legacy direct-database dashboard or the API-powered Streamlit client:
+```bash
+# API-powered Streamlit client
+uv run streamlit run src/api_dashboard.py
+
+# Direct SQLite database dashboard
+uv run streamlit run src/dashboard.py
+```
+
+### 6. Interactive Exploratory & Machine Learning Notebooks
+- `notebooks/01_exploratory_data_analysis.ipynb`: Initial EDA on historical cutoffs and intake capacity.
+- `notebooks/02_data_quality_investigation.ipynb`: Deep dive into extraction robustness and missing `NQC` handling.
+- `notebooks/03_machine_learning_pipeline.ipynb`: End-to-end ML benchmark, residual diagnostics, and inference simulation.
 
 ## The UGC Validator Engine
 
@@ -89,3 +124,20 @@ The pipeline extracts and structures the data into a star schema optimized for B
 - **Write-Audit-Publish (WAP)**: Data is written to temporary files, strictly audited (e.g., null checks, row counts), and then atomically swapped into production.
 - **Data Quality Alerts**: The pipeline asserts that no more than 25% of cutoff values are missing (accounting for normal NQC cells), failing fast if data drift occurs.
 - **Time-Based ML Splitting**: ML models are trained strictly on past data and evaluated on the latest year to mimic true production serving and avoid temporal leakage.
+
+## Docker Containerization & Cloud Deployment
+
+The application is fully containerized using a multi-stage `Dockerfile` and automated through **Docker Hub**:
+
+- **Docker Hub Repository**: [`dilhara0592/image-test`](https://hub.docker.com/r/dilhara0592/image-test)
+- **GitHub Actions CI/CD Workflow**: [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) (runs unit tests, builds container, and pushes `dilhara0592/image-test:latest` to Docker Hub)
+- **Cloud Configurations**: Ready-to-deploy blueprints for **Render** ([`render.yaml`](render.yaml)), **Railway** ([`railway.toml`](railway.toml)), **Google Cloud Run**, and **AWS App Runner**.
+- **Detailed Guide**: See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for step-by-step cloud deployment instructions.
+
+### Run with Docker locally:
+```bash
+docker build -t dilhara0592/image-test:latest .
+docker run -p 8000:8000 dilhara0592/image-test:latest
+# Or run with docker-compose:
+docker compose up --build
+```

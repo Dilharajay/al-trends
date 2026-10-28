@@ -1,0 +1,25 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dilhara0592/image-test:latest
+    container_name: al-trends-service
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - APP_ENV=production
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - CORS_ORIGINS=*
+      - RATE_LIMIT_DEFAULT=100/minute
+      - RATE_LIMIT_PREDICT=30/minute
+      - RATE_LIMIT_BATCH=10/minute
+      - RATE_LIMIT_STUDENT=20/minute
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
