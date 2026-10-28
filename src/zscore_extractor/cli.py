@@ -56,12 +56,19 @@ def run_batch(input_dir: Path, output_base: Path, db_path: Path, use_db: bool, o
         return
 
     all_fact = pd.concat(fact_dfs, ignore_index=True)
-    all_course = pd.concat(course_dims, ignore_index=True).drop_duplicates(subset=["CourseID"]).reset_index(drop=True)
+    all_course = pd.concat(course_dims, ignore_index=True)
+    
+    from .ugc_codes import extract_all_intakes, get_canonical_course_name
+    all_course["CourseName"] = all_course.apply(
+        lambda row: get_canonical_course_name(row["CourseID"], row["CourseName"]),
+        axis=1
+    )
+    all_course = all_course.drop_duplicates(subset=["CourseID"]).sort_values("CourseName").reset_index(drop=True)
+    
     all_university = pd.concat(university_dims, ignore_index=True).drop_duplicates(subset=["UniversityID"]).reset_index(drop=True)
     all_district = district_dims[0]
     all_year = pd.concat(year_dims, ignore_index=True).drop_duplicates(subset=["YearID"]).reset_index(drop=True)
     
-    from .ugc_codes import extract_all_intakes
     all_intakes = extract_all_intakes()
 
     if use_db:

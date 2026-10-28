@@ -19,7 +19,7 @@ def generate_bridge():
     courses_df['name_lower'] = courses_df['CourseName'].str.lower()
     
     bio_kws = "medicine|dental|veterinary|biology|zoology|botany|ayurveda|nursing|pharmacy|medical|biomedical"
-    phy_kws = "engineering|physical science|physics|mathematics|computer science|architecture|surveying|quantity surveying"
+    phy_kws = "engineering|physical science|physics|mathematics|computer science|data science|artificial intelligence|architecture|surveying|quantity surveying"
     com_kws = "commerce|management|business|accounting|finance|estate management"
     art_kws = "arts|law|languages|translation|social|teaching|education|design|music|dance|drama"
     tech_kws = "engineering technology|bio systems technology|information and communication technology|biosystems"
