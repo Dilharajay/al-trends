@@ -58,4 +58,9 @@ def rf_model(engineered_features: pd.DataFrame) -> None:
     logger.info(f"Model trained. Validation (Year {latest_year}) MAE: {mae:.4f}, RMSE: {rmse:.4f}")
     
     os.makedirs("models", exist_ok=True)
-    joblib.dump(model, "models/rf_model.pkl", compress=6)
+    model_path = "models/rf_model.pkl"
+    # Compress model using joblib (level 6) to reduce artifact from ~285MB down to ~55MB
+    # This prevents Git LFS timeouts, fits under GitHub's 100MB limit, and speeds up container startup
+    joblib.dump(model, model_path, compress=6)
+    size_mb = os.path.getsize(model_path) / (1024 * 1024)
+    logger.info(f"Model compressed and saved to {model_path} ({size_mb:.2f} MB, lossless zlib level 6).")
